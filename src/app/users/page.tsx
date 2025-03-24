@@ -24,7 +24,6 @@ import { supabase } from "@/lib/supabase";
 import GenericTable from "@/components/custom/GenericTable";
 import { UserSchema } from "@/types/user";
 
-// Import Dialog components (assuming your UI library exposes these)
 import {
     Dialog,
     DialogContent,
@@ -34,6 +33,9 @@ import {
     DialogFooter,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import {Input} from "@/components/ui/input";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {TbUsersPlus} from "react-icons/tb";
 
 // FILTERING FUNCTIONS
 const multiColumnFilterFn = (row: any, columnId: string, filterValue: string) => {
@@ -128,15 +130,11 @@ function RowActions({ row }: { row: Row<UserSchema> }) {
                         <span>Edit</span>
                         <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
-                        <span>Duplicate</span>
-                        <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
-                    </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                     <DropdownMenuItem>
-                        <span>Archive</span>
+                        <span>Deactivate</span>
                         <DropdownMenuShortcut>⌘A</DropdownMenuShortcut>
                     </DropdownMenuItem>
                     <DropdownMenuSub>
@@ -214,6 +212,7 @@ function AddUserModal({ onUserAdded }: AddUserModalProps) {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button variant="outline" onClick={() => setOpen(true)}>
+                    <TbUsersPlus />
                     Add user
                 </Button>
             </DialogTrigger>
@@ -226,7 +225,7 @@ function AddUserModal({ onUserAdded }: AddUserModalProps) {
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-1 gap-2">
                             <label htmlFor="name">Name</label>
-                            <input
+                            <Input
                                 id="name"
                                 type="text"
                                 value={name}
@@ -237,7 +236,7 @@ function AddUserModal({ onUserAdded }: AddUserModalProps) {
                         </div>
                         <div className="grid grid-cols-1 gap-2">
                             <label htmlFor="email">Email</label>
-                            <input
+                            <Input
                                 id="email"
                                 type="email"
                                 value={email}
@@ -248,7 +247,7 @@ function AddUserModal({ onUserAdded }: AddUserModalProps) {
                         </div>
                         <div className="grid grid-cols-1 gap-2">
                             <label htmlFor="location">Location</label>
-                            <input
+                            <Input
                                 id="location"
                                 type="text"
                                 value={location}
@@ -257,21 +256,23 @@ function AddUserModal({ onUserAdded }: AddUserModalProps) {
                                 required
                             />
                         </div>
-                        <div className="grid grid-cols-1 gap-2">
+                        <div className="grid grid-cols-1 gap-2 w-full">
                             <label htmlFor="status">Status</label>
-                            <select
-                                id="status"
+                            <Select
                                 value={status}
-                                onChange={(e) =>
-                                    setStatus(e.target.value as "Active" | "Inactive" | "Pending")
-                                }
-                                className="input"
+                                onValueChange={(value) => setStatus(value as "Active" | "Inactive" | "Pending")}
                             >
-                                <option value="Active">Active</option>
-                                <option value="Inactive">Inactive</option>
-                                <option value="Pending">Pending</option>
-                            </select>
+                                <SelectTrigger id="status" className="input w-full">
+                                    <SelectValue placeholder="Select status"/>
+                                </SelectTrigger>
+                                <SelectContent className="w-full">
+                                    <SelectItem value="Active">Active</SelectItem>
+                                    <SelectItem value="Inactive">Inactive</SelectItem>
+                                    <SelectItem value="Pending">Pending</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
+
                     </div>
                     <DialogFooter>
                         <Button type="submit" disabled={isSubmitting}>
@@ -291,7 +292,7 @@ export default function UserPage() {
 
     useEffect(() => {
         async function fetchUsers() {
-            const { data, error } = await supabase
+            const {data, error} = await supabase
                 .from("users")
                 .select("id, name, email, location, status")
                 .order("name", { ascending: true });
