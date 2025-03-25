@@ -22,38 +22,25 @@ values
 
 CREATE TABLE projects (
     id text NOT NULL,
-    status text NOT NULL,
+    projectLead uuid NOT NULL REFERENCES users(id) ON DELETE SET NULL,
+    angebotsnummer text NOT NULL,
     client text NOT NULL,
+    frameContract text NOT NULL,
+    purchaseOrder text NOT NULL,
+    projectName text NOT NULL,
+    linkToProjectFolder text NOT NULL,
+    targetMargin numeric NOT NULL,
+    revenue numeric NOT NULL,
+    manDays numeric NOT NULL,
+    status text NOT NULL,
     name text NOT NULL,
     periodStart date NOT NULL,
-    periodEnd date NOT NULL,
-    projectLead uuid NOT NULL REFERENCES users(id) ON DELETE SET NULL
+    periodEnd date NOT NULL
 );
 
-INSERT INTO projects
-("id", "status", "client", "name", "periodstart", "periodend", "projectlead") VALUES
-('BW0821Nr4', 'Active', 'Beitragsservice', 'Scrum-Master', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('DIC2025Q1', 'Active', 'Diconium', 'OneAppDev', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('DXO2025001', 'Active', 'DX.One', 'RetailCap', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('DXO2025003HJ1', 'Active', 'DX.One', 'RetailCap', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('60C1366754011', 'Active', 'Hays', 'Hiyundai - Kia', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('LVM2025001', 'Active', 'LVM', 'KAL Beratung', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('LVM2024001', 'Finished', 'LVM', 'KAL Beratung', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('MAN2024004', 'Active', 'MAN', 'MAN erWin', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('MWG2024001', 'Active', 'Müller Weber', 'Infrastructure Assessment', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('PUE2024001', 'Finished', 'Public Experts / KDO', 'Kubernetes Workshop', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('RHB2023004', 'Active', 'Rheinbahn', 'Logging & Monitoring', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('RHB2023003', 'Active', 'Rheinbahn', 'Dokumente & Richtlinien', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('SWZ2024001', 'Active', 'Schwarzt GmbH', 'Digitalstrategie', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('SKF2024001', 'Active', 'SKF', 'Beratungsförderung Transformationsagentur', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('SON2025001MeinSoVDQ1', 'Active', 'SoVD', 'SoVD App', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('VWG2025004', 'Active', 'Volkswagen', 'Integration', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('VWG2025003SERMI', 'Active', 'Volkswagen', 'VW-SERMI', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('VWG2025005WISEq12025', 'Active', 'Volkswagen', 'WISE', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('VWG2025002GSSnilsFuchs', 'Active', 'Volkswagen', 'GSS - Diagnose Cluster', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('VWG2025007', 'Active', 'Volkswagen', 'Application Management', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('VWG2025001ElsaProMigrQ1', 'Active', 'Volkswagen AG', 'ElsaPro Migration ins GRP', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('VWG2025006', 'Active', 'Volkswagen AG', 'GSA Support', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('VWFS2025001', 'Active', 'Volkswagen Bank GmbH', 'IDV-Ablösestrategie', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('WEF2025001', 'Finished', 'Welfenakademie', 'Vorlesung Consulting', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad'),
-('ZEG202500', 'Active', 'zw-engeneering GmbH', 'QM-Beratun', '2023-01-15', '2023-06-30', '03f0587b-82a3-41e9-978b-19c0649dd6ad');
+INSERT INTO projects (id,projectLead,angebotsnummer,client,frameContract,purchaseOrder,projectName,linkToProjectFolder,targetMargin,revenue,manDays,status,name,periodStart,periodEnd)
+VALUES
+('proj-001','247ac5ea-5d98-4d79-9f00-08043497c45e','ANG-2024-001','Acme Corp','FC-2023-ACME','PO-1001','Website Redesign','https://drive.example.com/folder/project-001',25.5,50000,120,'Active','Website Revamp','2024-01-15','2024-06-30'),
+('proj-002','03f0587b-82a3-41e9-978b-19c0649dd6ad','ANG-2024-002','Globex Ltd','FC-2022-GLOBEX','PO-1002','Mobile App Development','https://drive.example.com/folder/project-002',30.0,75000,180,'Pending','App Dev Phase 1','2024-03-01','2024-08-31'),
+('proj-003','26e3b41c-f66d-4ba8-8828-e6d2f2f7d746','ANG-2024-003','Initech','FC-2024-INITECH','PO-1003','Cloud Migration','https://drive.example.com/folder/project-003',20.0,100000,200,'Finished','Infra Migration','2023-09-01','2024-02-28'),
+('proj-004', '3fad6a37-ec3d-4957-92e6-1a5f6a255b3c', 'ANG-2024-004', 'Umbrella Inc', 'FC-2021-UMBR', 'PO-1004', 'Data Warehouse Setup', 'https://drive.example.com/folder/project-004', 18.75, 65000, 150, 'Inactive', 'DWH Setup', '2024-04-01', '2024-12-31');
