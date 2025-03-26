@@ -20,7 +20,7 @@ import {
   UserCog,
   UserSearch,
 } from "lucide-react";
-import {TbAddressBook, TbLayoutDashboard, TbUsers} from "react-icons/tb";
+import {TbAddressBook, TbBuildingCommunity, TbCalendarTime, TbLayoutDashboard, TbUsers} from "react-icons/tb";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -212,36 +212,50 @@ export function SessionNavBar() {
                         )}
                       </motion.li>
                     </Link>
-
                     <Separator className="w-full" />
-
-
-
-
-
-
-
-
-
-
                     <Link
-                      href="/reports"
-                      className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                        href="/allocations"
+                        className={cn(
+                            "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
 
-                        pathname?.includes("reports") &&
-                          "bg-muted text-blue-600",
-                      )}
+                            pathname?.includes("allocations") &&
+                            "bg-muted text-blue-600",
+                        )}
                     >
-                      <FileClock className="h-4 w-4" />{" "}
+                      <TbBuildingCommunity className="h-4 w-4" />{" "}
                       <motion.li variants={variants}>
                         {!isCollapsed && (
-                          <div className="flex items-center gap-2">
-                            <p className="ml-2 text-sm font-medium">Reports</p>
-                          </div>
+                            <div className="flex items-center gap-2">
+                              <p className="ml-2 text-sm font-medium">Allocations</p>
+                            </div>
                         )}
                       </motion.li>
                     </Link>
+                    <Link
+                        href="/timesheets"
+                        className={cn(
+                            "flex h-8 flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                            pathname?.includes("chat") && "bg-muted text-blue-600",
+                        )}
+                    >
+                      <TbCalendarTime className="h-4 w-4" />{" "}
+                      <motion.li variants={variants}>
+                        {!isCollapsed && (
+                            <div className="ml-2 flex items-center  gap-2">
+                              <p className="text-sm font-medium">Time Tracking</p>
+                            </div>
+                        )}
+                      </motion.li>
+                    </Link>
+
+
+
+
+
+
+
+
+
                     <Link
                       href="/chat"
                       className={cn(

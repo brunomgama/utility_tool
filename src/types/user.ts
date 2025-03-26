@@ -3,6 +3,7 @@ export type UserSchema = {
     name: string;
     email: string;
     location: string;
-    flag: string;
+    role: "Admin" | "User";
+    department: string;
     status: "Active" | "Inactive" | "Pending";
 };

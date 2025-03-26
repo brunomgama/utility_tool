@@ -1,47 +1,30 @@
-// GenericTable.tsx
 "use client";
 
 import { useId, useRef, useState } from "react";
-import {
-    ColumnDef,
-    ColumnFiltersState,
-    PaginationState,
-    SortingState,
-    VisibilityState,
-    useReactTable,
-    getCoreRowModel,
-    getSortedRowModel,
-    getPaginationRowModel,
-    getFilteredRowModel,
-    getFacetedUniqueValues,
-    flexRender,
-} from "@tanstack/react-table";
+import {ColumnDef, ColumnFiltersState, PaginationState, SortingState, VisibilityState, useReactTable, getCoreRowModel,
+    getSortedRowModel, getPaginationRowModel, getFilteredRowModel, getFacetedUniqueValues, flexRender} from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import {ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, CircleX, Columns3, ListFilter} from "lucide-react";
-import {useSidebar} from "@/context/sidebar-context";
 import { cn } from "@/lib/utils";
-import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuLabel,
-    DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
+import {DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
 
 type Props<T> = {
     data: T[];
     columns: ColumnDef<T>[];
     globalFilterKey?: keyof T;
     renderActions?: React.ReactNode;
+    viewCondition: boolean;
+    rowSelection?: Record<string, boolean>;
+    onRowSelectionChange?: (updater: any) => void;
 };
 
-export default function GenericTable<T>({ data, columns, globalFilterKey, renderActions }: Props<T>) {
+
+export default function GenericTable<T>({ data, columns, globalFilterKey, renderActions, viewCondition, rowSelection, onRowSelectionChange }: Props<T>) {
     const id = useId();
-    const { isCollapsed } = useSidebar();
     const inputRef = useRef<HTMLInputElement>(null);
 
     const [sorting, setSorting] = useState<SortingState>([]);
@@ -61,11 +44,18 @@ export default function GenericTable<T>({ data, columns, globalFilterKey, render
         getFacetedUniqueValues: getFacetedUniqueValues(),
         onColumnFiltersChange: setColumnFilters,
         onColumnVisibilityChange: setColumnVisibility,
-        state: { sorting, pagination, columnFilters, columnVisibility },
+        onRowSelectionChange,
+        state: {
+            sorting,
+            pagination,
+            columnFilters,
+            columnVisibility,
+            rowSelection,
+        },
     });
 
     return (
-        <div className={`transition-all duration-300 ${isCollapsed ? "ml-[3.05rem]" : "ml-[15rem]"} p-6`}>
+        <div className="transition-all duration-300 p-6">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <div className="flex items-center gap-3">
                     {globalFilterKey && (
@@ -104,40 +94,42 @@ export default function GenericTable<T>({ data, columns, globalFilterKey, render
                         </div>
                     )}
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline">
-                                <Columns3
-                                    className="-ms-1 me-2 opacity-60"
-                                    size={16}
-                                    strokeWidth={2}
-                                    aria-hidden="true"
-                                />
-                                View
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-                            {table
-                                .getAllColumns()
-                                .filter((column) => column.getCanHide())
-                                .map((column) => {
-                                    return (
-                                        <DropdownMenuCheckboxItem
-                                            key={column.id}
-                                            className="capitalize"
-                                            checked={column.getIsVisible()}
-                                            onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                                            onSelect={(event) => event.preventDefault()}
-                                        >
-                                            {column.id}
-                                        </DropdownMenuCheckboxItem>
-                                    );
-                                })}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    {viewCondition && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline">
+                                    <Columns3
+                                        className="-ms-1 me-2 opacity-60"
+                                        size={16}
+                                        strokeWidth={2}
+                                        aria-hidden="true"
+                                    />
+                                    View
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+                                {table
+                                    .getAllColumns()
+                                    .filter((column) => column.getCanHide())
+                                    .map((column) => {
+                                        return (
+                                            <DropdownMenuCheckboxItem
+                                                key={column.id}
+                                                className="capitalize"
+                                                checked={column.getIsVisible()}
+                                                onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                                                onSelect={(event) => event.preventDefault()}
+                                            >
+                                                {column.id}
+                                            </DropdownMenuCheckboxItem>
+                                        );
+                                    })}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
                 </div>
-                
+
                 {renderActions && <div>{renderActions}</div>}
             </div>
 
