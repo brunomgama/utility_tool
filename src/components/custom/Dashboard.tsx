@@ -1,376 +1,19 @@
 "use client"
 import { format, subDays } from "date-fns"
 import { Activity, CheckCircle2, Clock, ClipboardList, DollarSign, Users } from "lucide-react"
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
+import {useEffect, useState} from "react";
+import {UserSchema} from "@/types/user";
+import {supabase} from "@/lib/supabase";
+import {ProjectSchema} from "@/types/project";
+import {AllocationSchema} from "@/types/allocation";
+import {TimeTrackingSchema} from "@/types/time_tracking";
 
-// Types from our existing components
-type UserSchema = {
-    id: string
-    name: string
-    email: string
-    location: string
-    flag: string
-    status: "Active" | "Inactive" | "Pending"
-    role?: string
-    department?: string
-}
-
-type ProjectSchema = {
-    id: string
-    projectName: string
-    client: string
-    status: "Active" | "Inactive" | "Pending" | "Finished"
-    startDate: Date
-    endDate: Date
-    description: string
-    manDays: number
-    completedDays: number
-    budget?: number
-    projectManager?: string
-    technologies?: string[]
-}
-
-type AllocationSchema = {
-    id: string
-    projectId: string
-    userId: string
-    startDate: Date
-    endDate: Date
-    percentage: number
-    role: string
-}
-
-type TimeEntrySchema = {
-    id: string
-    userId: string
-    projectId: string
-    date: Date
-    hours: number
-    description: string
-    status: "Draft" | "Submitted" | "Approved" | "Rejected"
-}
-
-// Sample data (reusing from previous components)
-const users: UserSchema[] = [
-    {
-        id: "USR-001",
-        name: "Anna Schmidt",
-        email: "anna.schmidt@example.com",
-        location: "Berlin, Germany",
-        flag: "🇩🇪",
-        status: "Active",
-        role: "Senior Developer",
-        department: "Engineering",
-    },
-    {
-        id: "USR-002",
-        name: "Thomas Müller",
-        email: "thomas.mueller@example.com",
-        location: "Munich, Germany",
-        flag: "🇩🇪",
-        status: "Active",
-        role: "Project Manager",
-        department: "Project Management",
-    },
-    {
-        id: "USR-003",
-        name: "Maria Garcia",
-        email: "maria.garcia@example.com",
-        location: "Madrid, Spain",
-        flag: "🇪🇸",
-        status: "Active",
-        role: "UX Designer",
-        department: "Design",
-    },
-    {
-        id: "USR-004",
-        name: "Jean Dupont",
-        email: "jean.dupont@example.com",
-        location: "Paris, France",
-        flag: "🇫🇷",
-        status: "Inactive",
-        role: "Business Analyst",
-        department: "Business",
-    },
-    {
-        id: "USR-005",
-        name: "Paolo Rossi",
-        email: "paolo.rossi@example.com",
-        location: "Milan, Italy",
-        flag: "🇮🇹",
-        status: "Pending",
-        role: "DevOps Engineer",
-        department: "Operations",
-    },
-    {
-        id: "USR-006",
-        name: "Emma Johnson",
-        email: "emma.johnson@example.com",
-        location: "London, UK",
-        flag: "🇬🇧",
-        status: "Active",
-        role: "QA Engineer",
-        department: "Quality Assurance",
-    },
-    {
-        id: "USR-007",
-        name: "Lars Andersen",
-        email: "lars.andersen@example.com",
-        location: "Copenhagen, Denmark",
-        flag: "🇩🇰",
-        status: "Active",
-        role: "Frontend Developer",
-        department: "Engineering",
-    },
-]
-
-const projects: ProjectSchema[] = [
-    {
-        id: "PRJ-2023-001",
-        projectName: "ERP System Implementation",
-        client: "Acme Corporation",
-        status: "Active",
-        startDate: new Date("2023-01-15"),
-        endDate: new Date("2023-06-30"),
-        description: "Implementation of a new ERP system to streamline business processes and improve efficiency.",
-        manDays: 120,
-        completedDays: 65,
-        budget: 150000,
-        projectManager: "Thomas Müller",
-        technologies: ["React", "Node.js", "PostgreSQL", "Docker"],
-    },
-    {
-        id: "PRJ-2023-002",
-        projectName: "Cloud Migration",
-        client: "TechSolutions GmbH",
-        status: "Active",
-        startDate: new Date("2023-02-01"),
-        endDate: new Date("2023-04-30"),
-        description: "Migration of on-premises infrastructure to cloud-based solutions for improved scalability.",
-        manDays: 60,
-        completedDays: 40,
-        budget: 85000,
-        projectManager: "Thomas Müller",
-        technologies: ["AWS", "Terraform", "Kubernetes", "Docker"],
-    },
-    {
-        id: "PRJ-2023-003",
-        projectName: "E-Commerce Platform",
-        client: "Global Retail Inc.",
-        status: "Pending",
-        startDate: new Date("2023-03-15"),
-        endDate: new Date("2023-09-30"),
-        description: "Development of a new e-commerce platform with advanced features and mobile support.",
-        manDays: 180,
-        completedDays: 0,
-        budget: 200000,
-        projectManager: "Emma Johnson",
-        technologies: ["Next.js", "Tailwind CSS", "MongoDB", "Stripe"],
-    },
-    {
-        id: "PRJ-2022-015",
-        projectName: "Patient Management System",
-        client: "HealthCare Solutions",
-        status: "Finished",
-        startDate: new Date("2022-08-01"),
-        endDate: new Date("2022-12-15"),
-        description: "Development of a comprehensive patient management system for healthcare providers.",
-        manDays: 90,
-        completedDays: 90,
-        budget: 120000,
-        projectManager: "Jean Dupont",
-        technologies: ["Angular", "Spring Boot", "MySQL", "Azure"],
-    },
-    {
-        id: "PRJ-2023-004",
-        projectName: "Fraud Detection System",
-        client: "Financial Services Ltd.",
-        status: "Active",
-        startDate: new Date("2023-02-15"),
-        endDate: new Date("2023-08-30"),
-        description: "Implementation of an AI-powered fraud detection system for financial transactions.",
-        manDays: 200,
-        completedDays: 85,
-        budget: 250000,
-        projectManager: "Emma Johnson",
-        technologies: ["Python", "TensorFlow", "PostgreSQL", "AWS"],
-    },
-]
-
-const allocations: AllocationSchema[] = [
-    {
-        id: "ALLOC-001",
-        userId: "USR-001",
-        projectId: "PRJ-2023-001",
-        startDate: new Date("2023-01-15"),
-        endDate: new Date("2023-04-30"),
-        percentage: 0.75,
-        role: "Lead Developer",
-    },
-    {
-        id: "ALLOC-002",
-        userId: "USR-001",
-        projectId: "PRJ-2023-003",
-        startDate: new Date("2023-05-01"),
-        endDate: new Date("2023-09-30"),
-        percentage: 0.5,
-        role: "Technical Consultant",
-    },
-    {
-        id: "ALLOC-003",
-        userId: "USR-002",
-        projectId: "PRJ-2023-001",
-        startDate: new Date("2023-01-15"),
-        endDate: new Date("2023-06-30"),
-        percentage: 0.25,
-        role: "Project Manager",
-    },
-    {
-        id: "ALLOC-004",
-        userId: "USR-002",
-        projectId: "PRJ-2023-002",
-        startDate: new Date("2023-02-01"),
-        endDate: new Date("2023-04-30"),
-        percentage: 0.5,
-        role: "Project Manager",
-    },
-    {
-        id: "ALLOC-005",
-        userId: "USR-003",
-        projectId: "PRJ-2023-002",
-        startDate: new Date("2023-02-15"),
-        endDate: new Date("2023-04-15"),
-        percentage: 1.0,
-        role: "UX/UI Designer",
-    },
-    {
-        id: "ALLOC-006",
-        userId: "USR-004",
-        projectId: "PRJ-2022-015",
-        startDate: new Date("2022-08-01"),
-        endDate: new Date("2022-11-30"),
-        percentage: 0.75,
-        role: "Business Analyst",
-    },
-    {
-        id: "ALLOC-007",
-        userId: "USR-005",
-        projectId: "PRJ-2023-004",
-        startDate: new Date("2023-03-01"),
-        endDate: new Date("2023-08-30"),
-        percentage: 0.6,
-        role: "Infrastructure Specialist",
-    },
-    {
-        id: "ALLOC-008",
-        userId: "USR-006",
-        projectId: "PRJ-2023-003",
-        startDate: new Date("2023-04-01"),
-        endDate: new Date("2023-09-30"),
-        percentage: 0.8,
-        role: "QA Lead",
-    },
-    {
-        id: "ALLOC-009",
-        userId: "USR-006",
-        projectId: "PRJ-2023-004",
-        startDate: new Date("2023-02-15"),
-        endDate: new Date("2023-03-31"),
-        percentage: 0.5,
-        role: "QA Consultant",
-    },
-    {
-        id: "ALLOC-010",
-        userId: "USR-007",
-        projectId: "PRJ-2023-001",
-        startDate: new Date("2023-01-15"),
-        endDate: new Date("2023-06-30"),
-        percentage: 1.0,
-        role: "Frontend Developer",
-    },
-    {
-        id: "ALLOC-011",
-        userId: "USR-007",
-        projectId: "PRJ-2023-002",
-        startDate: new Date("2023-02-01"),
-        endDate: new Date("2023-02-28"),
-        percentage: 0.5,
-        role: "UI Developer",
-    },
-    {
-        id: "ALLOC-012",
-        userId: "USR-007",
-        projectId: "PRJ-2023-004",
-        startDate: new Date("2023-03-01"),
-        endDate: new Date("2023-04-30"),
-        percentage: 0.25,
-        role: "Frontend Consultant",
-    },
-]
-
-// Generate sample time entries for the past 30 days
-const generateTimeEntries = () => {
-    const entries: TimeEntrySchema[] = []
-    const today = new Date()
-
-    // For each day in the past 30 days
-    for (let i = 0; i < 30; i++) {
-        const date = subDays(today, i)
-        const dayOfWeek = date.getDay()
-
-        // Skip weekends
-        if (dayOfWeek === 0 || dayOfWeek === 6) continue
-
-        // For each project, create some entries
-        projects.forEach((project) => {
-            // Only create entries for active projects
-            if (project.status !== "Active" && project.status !== "Pending") return
-
-            // Find allocations for this project
-            const projectAllocations = allocations.filter((a) => a.projectId === project.id)
-
-            // For each allocation, create an entry
-            projectAllocations.forEach((allocation) => {
-                // Only create entries if the allocation is active for this date
-                if (date < allocation.startDate || date > allocation.endDate) return
-
-                // Random hours between 2 and 8, weighted by allocation percentage
-                const maxHours = 8 * allocation.percentage
-                const hours = 2 + Math.random() * (maxHours - 2)
-
-                // Random status, weighted towards "Approved"
-                const statusRandom = Math.random()
-                let status: TimeEntrySchema["status"]
-                if (statusRandom < 0.7) status = "Approved"
-                else if (statusRandom < 0.85) status = "Submitted"
-                else if (statusRandom < 0.95) status = "Draft"
-                else status = "Rejected"
-
-                entries.push({
-                    id: `TE-${date.getTime()}-${allocation.userId}-${project.id}`,
-                    userId: allocation.userId,
-                    projectId: project.id,
-                    date: new Date(date),
-                    hours: Math.round(hours * 2) / 2, // Round to nearest 0.5
-                    description: `Work on ${project.projectName}`,
-                    status,
-                })
-            })
-        })
-    }
-
-    return entries
-}
-
-const timeEntries = generateTimeEntries()
-
-// Helper functions
 const getInitials = (name: string) => {
     return name
         .split(" ")
@@ -392,24 +35,86 @@ const formatDate = (date: Date) => {
     return format(date, "MMM d, yyyy")
 }
 
-// Dashboard component
 export default function DashboardPage() {
-    // Calculate key metrics
+
+    const [users, setUsers] = useState<UserSchema[]>([])
+    const [projects, setProjects] = useState<ProjectSchema[]>([])
+    const [allocations, setAllocations] = useState<(AllocationSchema & { project?: ProjectSchema })[]>([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+    const [timeEntries, setTimeEntries] = useState<TimeTrackingSchema[]>([])
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true)
+            setError(null)
+
+            const [{ data: usersData }, { data: projectsData }, { data: allocationsData }, { data: techData }, { data: timeEntriesData }] =
+                await Promise.all([
+                    supabase.from("users").select("*"),
+                    supabase.from("projects").select("*"),
+                    supabase.from("allocations").select("*"),
+                    supabase.from("project_technologies").select("*"),
+                    supabase.from("time_tracking").select("*"),
+                ])
+
+            if (!usersData || !projectsData || !allocationsData || !techData || !timeEntriesData) {
+                setError("Failed to fetch data from Supabase")
+                setLoading(false)
+                return
+            }
+
+            const userMap = Object.fromEntries(usersData.map((u) => [u.id, u]))
+
+            const formattedProjects = projectsData.map((p) => ({
+                ...p,
+                completed_days: Number(p.completed_days),
+                budget: Number(p.budget),
+                man_days: Number(p.man_days),
+                target_margin: Number(p.target_margin),
+                revenue: Number(p.revenue),
+                period_start: new Date(p.period_start),
+                period_end: new Date(p.period_end),
+                projectManager: userMap[p.project_lead]?.name || "Unknown",
+                technologies: techData.filter((t) => t.project_id === p.id).map((t) => t.technology),
+            }))
+
+            const formattedAllocations = allocationsData.map((a) => ({
+                ...a,
+                percentage: Number(a.percentage),
+                start_date: new Date(a.start_date),
+                end_date: new Date(a.end_date),
+            }))
+
+            const formattedTimeEntries = timeEntriesData.map((entry) => ({
+                ...entry,
+                date: new Date(entry.date),
+            }))
+
+
+            setTimeEntries(formattedTimeEntries)
+            setProjects(formattedProjects)
+            setUsers(usersData)
+            setAllocations(formattedAllocations)
+            setLoading(false)
+        }
+
+        fetchData()
+    }, [])
+
     const activeProjects = projects.filter((p) => p.status === "Active").length
     const totalUsers = users.filter((u) => u.status === "Active").length
     const totalBudget = projects.reduce((sum, p) => sum + (p.budget || 0), 0)
-    const totalManDays = projects.reduce((sum, p) => sum + p.manDays, 0)
-    const completedManDays = projects.reduce((sum, p) => sum + p.completedDays, 0)
+    const totalManDays = projects.reduce((sum, p) => sum + p.man_days, 0)
+    const completedManDays = projects.reduce((sum, p) => sum + p.completed_days, 0)
     const completionPercentage = Math.round((completedManDays / totalManDays) * 100)
 
-    // Calculate time tracking metrics
     const approvedHours = timeEntries.filter((e) => e.status === "Approved").reduce((sum, e) => sum + e.hours, 0)
 
     const pendingHours = timeEntries
         .filter((e) => e.status === "Submitted" || e.status === "Draft")
         .reduce((sum, e) => sum + e.hours, 0)
 
-    // Project status distribution
     const projectStatusCounts = {
         Active: projects.filter((p) => p.status === "Active").length,
         Pending: projects.filter((p) => p.status === "Pending").length,
@@ -424,24 +129,21 @@ export default function DashboardPage() {
         Inactive: "bg-gray-500",
     }
 
-    // Time entries by project
     const timeEntriesByProject = projects
         .map((project) => {
-            const projectEntries = timeEntries.filter((e) => e.projectId === project.id)
+            const projectEntries = timeEntries.filter((e) => e.project_id === project.id)
             const totalHours = projectEntries.reduce((sum, e) => sum + e.hours, 0)
             return {
                 id: project.id,
-                name: project.projectName,
+                name: project.project_name,
                 hours: Math.round(totalHours * 10) / 10,
             }
         })
         .sort((a, b) => b.hours - a.hours)
-        .slice(0, 5) // Top 5 projects by hours
+        .slice(0, 5)
 
-    // Calculate max hours for scaling
     const maxProjectHours = Math.max(...timeEntriesByProject.map((p) => p.hours))
 
-    // Time entries by day for the past 14 days
     const timeEntriesByDay = Array.from({ length: 14 }, (_, i) => {
         const date = subDays(new Date(), i)
         const dayEntries = timeEntries.filter(
@@ -459,14 +161,12 @@ export default function DashboardPage() {
         }
     }).reverse()
 
-    // Calculate max daily hours for scaling
     const maxDailyHours = Math.max(...timeEntriesByDay.map((d) => d.hours))
 
-    // User allocation data
     const userAllocationData = users
         .filter((user) => user.status === "Active")
         .map((user) => {
-            const userAllocations = allocations.filter((a) => a.userId === user.id)
+            const userAllocations = allocations.filter((a) => a.user_id === user.id)
             const totalAllocation = userAllocations.reduce((sum, a) => sum + a.percentage, 0)
             return {
                 id: user.id,
@@ -475,9 +175,8 @@ export default function DashboardPage() {
             }
         })
         .sort((a, b) => b.allocation - a.allocation)
-        .slice(0, 7) // Top 7 users by allocation
+        .slice(0, 7)
 
-    // Department distribution
     const departmentCounts = users.reduce(
         (acc, user) => {
             const dept = user.department || "Unassigned"
@@ -497,7 +196,6 @@ export default function DashboardPage() {
         Unassigned: "bg-gray-500",
     }
 
-    // Recent activity (combining time entries and allocations)
     const recentActivities = [
         ...timeEntries.map((entry) => ({
             type: "time-entry" as const,
@@ -506,12 +204,12 @@ export default function DashboardPage() {
         })),
         ...allocations.map((allocation) => ({
             type: "allocation" as const,
-            date: allocation.startDate,
+            date: allocation.start_date,
             data: allocation,
         })),
     ]
         .sort((a, b) => b.date.getTime() - a.date.getTime())
-        .slice(0, 5) // Most recent 5 activities
+        .slice(0, 5)
 
     return (
         <div className="w-full space-y-6">
@@ -689,8 +387,8 @@ export default function DashboardPage() {
                                     {recentActivities.map((activity, index) => {
                                         if (activity.type === "time-entry") {
                                             const entry = activity.data
-                                            const user = users.find((u) => u.id === entry.userId)
-                                            const project = projects.find((p) => p.id === entry.projectId)
+                                            const user = users.find((u) => u.id === entry.user_id)
+                                            const project = projects.find((p) => p.id === entry.project_id)
 
                                             return (
                                                 <div key={index} className="flex items-start gap-4">
@@ -702,7 +400,7 @@ export default function DashboardPage() {
                                                     <div className="space-y-1">
                                                         <p className="text-sm font-medium">{user?.name} logged time</p>
                                                         <p className="text-sm text-muted-foreground">
-                                                            {entry.hours} hours on {project?.projectName}
+                                                            {entry.hours} hours on {project?.project_name}
                                                         </p>
                                                         <div className="flex items-center gap-2">
                                                             <Badge variant="outline" className="text-xs">
@@ -803,22 +501,22 @@ export default function DashboardPage() {
                                 <div className="space-y-6">
                                     {projects
                                         .filter((p) => p.status === "Active" || p.status === "Pending")
-                                        .sort((a, b) => b.completedDays / b.manDays - a.completedDays / a.manDays)
+                                        .sort((a, b) => b.completed_days / b.man_days - a.completed_days / a.man_days)
                                         .slice(0, 5)
                                         .map((project, index) => {
-                                            const progress = Math.round((project.completedDays / project.manDays) * 100)
+                                            const progress = Math.round((project.completed_days / project.man_days) * 100)
                                             return (
                                                 <div key={index} className="space-y-2">
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-sm font-medium">{project.projectName}</span>
+                                                        <span className="text-sm font-medium">{project.project_name}</span>
                                                         <span className="text-sm">{progress}%</span>
                                                     </div>
                                                     <Progress value={progress} className="h-2" />
                                                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                                                         <span>{project.client}</span>
                                                         <span>
-                              {project.completedDays} / {project.manDays} days
-                            </span>
+                                                          {project.completed_days} / {project.man_days} days
+                                                        </span>
                                                     </div>
                                                 </div>
                                             )
@@ -837,17 +535,17 @@ export default function DashboardPage() {
                             <div className="space-y-6">
                                 {projects
                                     .filter((p) => p.status === "Active")
-                                    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
+                                    .sort((a, b) => a.period_start.getTime() - b.period_start.getTime())
                                     .map((project, index) => {
-                                        const totalDays = (project.endDate.getTime() - project.startDate.getTime()) / (1000 * 60 * 60 * 24)
-                                        const elapsedDays = (new Date().getTime() - project.startDate.getTime()) / (1000 * 60 * 60 * 24)
+                                        const totalDays = (project.period_end.getTime() - project.period_start.getTime()) / (1000 * 60 * 60 * 24)
+                                        const elapsedDays = (new Date().getTime() - project.period_start.getTime()) / (1000 * 60 * 60 * 24)
                                         const timeProgress = Math.min(Math.max(Math.round((elapsedDays / totalDays) * 100), 0), 100)
 
                                         return (
                                             <div key={index} className="space-y-2">
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <h4 className="text-sm font-medium">{project.projectName}</h4>
+                                                        <h4 className="text-sm font-medium">{project.project_name}</h4>
                                                         <p className="text-xs text-muted-foreground">{project.client}</p>
                                                     </div>
                                                     <Badge
@@ -864,7 +562,7 @@ export default function DashboardPage() {
                                                     </Badge>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-xs">
-                                                    <span>{formatDate(project.startDate)}</span>
+                                                    <span>{formatDate(project.period_start)}</span>
                                                     <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
                                                         <div
                                                             className={cn(
@@ -874,7 +572,7 @@ export default function DashboardPage() {
                                                             style={{ width: `${timeProgress}%` }}
                                                         />
                                                     </div>
-                                                    <span>{formatDate(project.endDate)}</span>
+                                                    <span>{formatDate(project.period_end)}</span>
                                                 </div>
                                             </div>
                                         )
@@ -988,7 +686,7 @@ export default function DashboardPage() {
                                     .slice(0, 5)
                                     .map((user, index) => {
                                         const userAllocations = allocations.filter(
-                                            (a) => a.userId === user.id && new Date() >= a.startDate && new Date() <= a.endDate,
+                                            (a) => a.user_id === user.id && new Date() >= a.start_date && new Date() <= a.end_date,
                                         )
 
                                         const totalAllocation = userAllocations.reduce((sum, a) => sum + a.percentage, 0)
@@ -1026,12 +724,12 @@ export default function DashboardPage() {
                                                 <div className="pl-10 space-y-2">
                                                     {userAllocations.length > 0 ? (
                                                         userAllocations.map((allocation, i) => {
-                                                            const project = projects.find((p) => p.id === allocation.projectId)
+                                                            const project = projects.find((p) => p.id === allocation.project_id)
                                                             return (
                                                                 <div key={i} className="flex items-center justify-between text-sm">
                                                                     <div className="flex items-center gap-2">
                                                                         <div className="w-2 h-2 rounded-full bg-primary" />
-                                                                        <span>{project?.projectName}</span>
+                                                                        <span>{project?.project_name}</span>
                                                                     </div>
                                                                     <span>{Math.round(allocation.percentage * 100)}%</span>
                                                                 </div>

@@ -32,7 +32,7 @@ import {UserSchema} from "@/types/user";
 import {AllocationSchema} from "@/types/allocation";
 import {Label} from "@/components/ui/label";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import {useEffect, useId, useState} from "react";
+import {useEffect, useId, useMemo, useState} from "react";
 
 export default function AllocationsPage() {
     const id = useId();
