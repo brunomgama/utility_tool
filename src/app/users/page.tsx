@@ -14,21 +14,14 @@ import {Fragment, useEffect, useId, useState} from "react";
 import {useSidebar} from "@/context/sidebar-context";
 import {Label} from "@/components/ui/label";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import {ProjectResumedSchema, ProjectSchema} from "@/types/project";
+import {ProjectResumedSchema} from "@/types/project";
 import {UserSchema} from "@/types/user";
 import {AllocationSchema} from "@/types/allocation";
 import {supabase} from "@/lib/supabase";
 import {TbUsers} from "react-icons/tb";
 import * as React from "react";
-
-const getInitials = (name: string) => {
-    return name
-        .split(" ")
-        .slice(0, 2)
-        .map((part) => part.charAt(0))
-        .join("")
-        .toUpperCase()
-}
+import {getInitials} from "@/lib/initial";
+import {getCountryFlag} from "@/lib/flag";
 
 export default function UsersPage() {
     const id = useId();
@@ -86,6 +79,17 @@ export default function UsersPage() {
         {
             accessorKey: "location",
             header: "Location",
+            cell: ({ row }) => {
+                const location = row.getValue("location") as string
+                const flag = getCountryFlag(location)
+
+                return (
+                    <div className="flex items-center gap-2">
+                        {flag && <span>{flag}</span>}
+                        <span>{location}</span>
+                    </div>
+                )
+            },
         },
         {
             accessorKey: "role",
