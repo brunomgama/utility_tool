@@ -16,8 +16,6 @@ export const validate_user = async () => {
         .eq("id", user_id)
         .single();
 
-    console.log(user, error);
-
     if (error || !user) {
         redirect("/onboarding")
     }

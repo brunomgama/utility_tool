@@ -25,12 +25,12 @@ import {useRouter} from "next/navigation";
 
 export default function UsersDashboard() {
     const id = useId();
+    const { isCollapsed } = useSidebar();
     const router = useRouter()
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
     const [expanded, setExpanded] = useState<Record<string, boolean>>({})
     const [statusFilter, setStatusFilter] = useState<string[]>([])
-    const { isCollapsed } = useSidebar();
     const [users, setUsers] = useState<UserSchema[]>([])
     const [projects, setProjects] = useState<ProjectResumedSchema[]>([])
     const [allocations, setAllocations] = useState<(AllocationSchema & { project?: ProjectResumedSchema })[]>([])

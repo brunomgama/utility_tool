@@ -4,7 +4,22 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge"
-import {Blocks, ChevronsUpDown, FileClock, GraduationCap, Layout, LogOut, MessageSquareText, MessagesSquare, Plus, Settings, UserCircle, UserCog, UserSearch} from "lucide-react";
+import {
+  BarChart,
+  Blocks,
+  ChevronsUpDown,
+  FileClock,
+  GraduationCap,
+  Layout,
+  LogOut,
+  MessageSquareText,
+  MessagesSquare,
+  Plus,
+  Settings,
+  UserCircle,
+  UserCog,
+  UserSearch
+} from "lucide-react";
 import {TbAddressBook, TbBuildingCommunity, TbCalendarTime, TbLayoutDashboard, TbUsers} from "react-icons/tb";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Link from "next/link";
@@ -89,7 +104,6 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
                         size="sm"
                         className="flex w-fit items-center gap-2 px-2"
                     >
-                      {/* Custom Logo */}
                       <Image
                           src="/logo.svg"
                           alt="Rethink logo"
@@ -169,7 +183,49 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
                         )}
                       </motion.li>
                     </Link>
+                    <Link
+                        href="/chat"
+                        className={cn(
+                            "flex h-8 flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                            pathname?.includes("chat") && "bg-muted text-blue-600",
+                        )}
+                    >
+                      <MessagesSquare className="h-4 w-4" />
+                      <motion.li variants={variants}>
+                        {!isCollapsed && (
+                            <div className="ml-2 flex items-center  gap-2">
+                              <p className="text-sm font-medium">Chat</p>
+                              <Badge
+                                  className={cn(
+                                      "flex h-fit w-fit items-center gap-1.5 rounded border-none bg-red-50 px-1.5 text-red-600 dark:bg-red-700 dark:text-red-300",
+                                  )}
+                                  variant="outline"
+                              >
+                                TBI
+                              </Badge>
+                            </div>
+                        )}
+                      </motion.li>
+                    </Link>
+                    <Link
+                        href="/timetracking"
+                        className={cn(
+                            "flex h-8 flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                            pathname?.includes("chat") && "bg-muted text-blue-600",
+                        )}
+                    >
+                      <TbCalendarTime className="h-4 w-4" />{" "}
+                      <motion.li variants={variants}>
+                        {!isCollapsed && (
+                            <div className="ml-2 flex items-center  gap-2">
+                              <p className="text-sm font-medium">Time Tracking</p>
+                            </div>
+                        )}
+                      </motion.li>
+                    </Link>
 
+
+                    <Separator className="w-full" />
                     <Link
                         href="/projects"
                         className={cn(
@@ -185,7 +241,6 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
                         )}
                       </motion.li>
                     </Link>
-                    <Separator className="w-full" />
                     <Link
                         href="/allocations"
                         className={cn(
@@ -205,17 +260,17 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
                       </motion.li>
                     </Link>
                     <Link
-                        href="/timesheets"
+                        href="/timesheetanalysis"
                         className={cn(
                             "flex h-8 flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
                             pathname?.includes("chat") && "bg-muted text-blue-600",
                         )}
                     >
-                      <TbCalendarTime className="h-4 w-4" />{" "}
+                      <BarChart className="h-4 w-4" />{" "}
                       <motion.li variants={variants}>
                         {!isCollapsed && (
                             <div className="ml-2 flex items-center  gap-2">
-                              <p className="text-sm font-medium">Time Tracking</p>
+                              <p className="text-sm font-medium">Time Sheet Analysis</p>
                             </div>
                         )}
                       </motion.li>
@@ -229,30 +284,7 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
 
 
 
-                    <Link
-                      href="/chat"
-                      className={cn(
-                        "flex h-8 flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
-                        pathname?.includes("chat") && "bg-muted text-blue-600",
-                      )}
-                    >
-                      <MessagesSquare className="h-4 w-4" />
-                      <motion.li variants={variants}>
-                        {!isCollapsed && (
-                          <div className="ml-2 flex items-center  gap-2">
-                            <p className="text-sm font-medium">Chat</p>
-                            <Badge
-                              className={cn(
-                                "flex h-fit w-fit items-center gap-1.5 rounded border-none bg-blue-50 px-1.5 text-blue-600 dark:bg-blue-700 dark:text-blue-300",
-                              )}
-                              variant="outline"
-                            >
-                              BETA
-                            </Badge>
-                          </div>
-                        )}
-                      </motion.li>
-                    </Link>
+
                     <Separator className="w-full" />
                     <Link
                       href="/deals"

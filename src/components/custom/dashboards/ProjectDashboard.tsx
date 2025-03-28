@@ -34,10 +34,10 @@ const formatDate = (date: Date) => {
 
 export default function ProjectsDashboard() {
     const id = useId();
+    const { isCollapsed } = useSidebar();
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
     const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-    const { isCollapsed } = useSidebar();
     const [loading, setLoading] = useState(true);
     const [projects, setProjects] = useState<ProjectSchema[]>([]);
 

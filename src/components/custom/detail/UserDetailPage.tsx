@@ -15,6 +15,8 @@ import {useEffect, useState} from "react";
 import {UserSchema} from "@/types/user";
 import {getInitials} from "@/lib/initial";
 import {supabase} from "@/lib/supabase";
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 
 export default function UserDetailPage({ userId }: { userId: string }) {
     const [user, setUser] = useState<UserSchema | null>(null)
@@ -22,22 +24,29 @@ export default function UserDetailPage({ userId }: { userId: string }) {
     const [isUpdating, setIsUpdating] = useState(false)
     const router = useRouter()
 
+    const [showAllocateDialog, setShowAllocateDialog] = useState(false)
+    const [projects, setProjects] = useState<{ id: string; project_name: string }[]>([])
+    const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
+    const [startDate, setStartDate] = useState<string>("")
+    const [endDate, setEndDate] = useState<string>("")
+    const [percentage, setPercentage] = useState<number>(0)
+    const [projectRole, setProjectRole] = useState<string>("")
+
     const processedUserId = userId.replace("%7C", "|")
+
+    console.log("User ID:", processedUserId)
 
     useEffect(() => {
         const fetchUserData = async () => {
             const { data: userData, error: userError } = await supabase
-                .from("users")
-                .select("*")
-                .eq("id", processedUserId)
-                .single()
+                .from("users").select("*")
+                .eq("id", processedUserId).single()
 
             if (userError || !userData) return
             setUser(userData)
 
             const { data: allocationsData, error: allocationsError } = await supabase
-                .from("allocations")
-                .select("id, user_id, project_id")
+                .from("allocations").select("id, user_id, project_id, percentage, role, start_date, end_date")
                 .eq("user_id", processedUserId)
 
             if (allocationsError || !allocationsData) return
@@ -45,14 +54,82 @@ export default function UserDetailPage({ userId }: { userId: string }) {
             const projectIds = allocationsData.map((a) => a.project_id)
 
             const { data: projectsData, error: projectsError } = await supabase
-                .from("projects")
-                .select("id, project_name, client, status")
+                .from("projects").select("id, project_name, client, status")
                 .in("id", projectIds)
 
             if (projectsError || !projectsData) return
 
             const enrichedAllocations = allocationsData.map((allocation) => {
                 const project = projectsData.find((p) => p.id === allocation.project_id)
+                return {
+                    ...allocation,
+                    project: project
+                        ? {
+                            id: project.id,
+                            projectName: project.project_name,
+                            client: project.client,
+                            status: project.status,
+                        }
+                        : undefined,
+                }
+            })
+
+            setUserAllocations(enrichedAllocations)
+        }
+
+        fetchUserData()
+    }, [userId])
+
+    useEffect(() => {
+        if (showAllocateDialog) {
+            supabase
+                .from("projects")
+                .select("id, project_name")
+                .then(({ data }) => {
+                    if (data) setProjects(data)
+                })
+        }
+    }, [showAllocateDialog])
+
+    const handleAllocate = async () => {
+        if (!selectedProjectId || !user) return
+
+        console.log("Allocating user to project:", selectedProjectId)
+        console.log("User ID:", processedUserId)
+
+        const { error } = await supabase.from("allocations").insert({
+            user_id: user.id,
+            project_id: selectedProjectId,
+            start_date: startDate,
+            end_date: endDate,
+            percentage,
+            role: projectRole,
+        })
+
+        if (error) {
+            console.error("Error allocating user:", error)
+            return
+        }
+
+        setShowAllocateDialog(false)
+        setSelectedProjectId(null)
+        setStartDate("")
+        setEndDate("")
+        setPercentage(0)
+        setProjectRole("")
+
+        const { data: newAllocations, error: allocationsError } = await supabase
+            .from("allocations").select("id, user_id, project_id")
+            .eq("user_id", processedUserId)
+
+        if (!allocationsError && newAllocations) {
+            const projectIds = newAllocations.map((a) => a.project_id)
+            const { data: newProjects } = await supabase
+                .from("projects").select("id, project_name, client, status")
+                .in("id", projectIds)
+
+            const enrichedAllocations = newAllocations.map((allocation) => {
+                const project = newProjects?.find((p) => p.id === allocation.project_id)
                 return {
                     ...allocation,
                     project: project ? {
@@ -66,9 +143,7 @@ export default function UserDetailPage({ userId }: { userId: string }) {
 
             setUserAllocations(enrichedAllocations)
         }
-
-        fetchUserData()
-    }, [userId])
+    }
 
     const handleActivateUser = async () => {
         if (!user) return
@@ -196,7 +271,6 @@ export default function UserDetailPage({ userId }: { userId: string }) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* User Profile Card */}
                 <Card>
                     <CardHeader className="pb-2">
                         <div className="flex justify-between items-start">
@@ -268,7 +342,6 @@ export default function UserDetailPage({ userId }: { userId: string }) {
                     </CardContent>
                 </Card>
 
-                {/* Project Allocations */}
                 <div className="md:col-span-2">
                     <Tabs defaultValue="allocations" className="w-full">
                         <TabsList className="grid grid-cols-2">
@@ -278,10 +351,16 @@ export default function UserDetailPage({ userId }: { userId: string }) {
 
                         <TabsContent value="allocations" className="mt-4">
                             <Card>
-                                <CardHeader>
-                                    <CardTitle>Project Allocations</CardTitle>
-                                    <CardDescription>Projects this user is currently allocated to</CardDescription>
+                                <CardHeader className="flex flex-row items-center justify-between">
+                                    <div>
+                                        <CardTitle>Project Allocations</CardTitle>
+                                        <CardDescription>Projects this user is currently allocated to</CardDescription>
+                                    </div>
+                                    <Button onClick={() => setShowAllocateDialog(true)}>
+                                        + Allocate to Project
+                                    </Button>
                                 </CardHeader>
+
                                 <CardContent>
                                     {userAllocations.length > 0 ? (
                                         <div className="border rounded-md overflow-hidden">
@@ -291,6 +370,7 @@ export default function UserDetailPage({ userId }: { userId: string }) {
                                                         <TableHead>Project</TableHead>
                                                         <TableHead>Client</TableHead>
                                                         <TableHead>Status</TableHead>
+                                                        <TableHead>Percentage</TableHead>
                                                         <TableHead>Allocation ID</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
@@ -314,6 +394,7 @@ export default function UserDetailPage({ userId }: { userId: string }) {
                                                                     {allocation.project?.status}
                                                                 </Badge>
                                                             </TableCell>
+                                                            <TableCell>{(allocation.percentage*100)}%</TableCell>
                                                             <TableCell className="font-mono text-xs">{allocation.id}</TableCell>
                                                         </TableRow>
                                                     ))}
@@ -366,6 +447,69 @@ export default function UserDetailPage({ userId }: { userId: string }) {
                     </Tabs>
                 </div>
             </div>
+
+            <Dialog open={showAllocateDialog} onOpenChange={setShowAllocateDialog}>
+                <DialogContent className="space-y-4">
+                    <DialogHeader>
+                        <DialogTitle>Allocate to a Project</DialogTitle>
+                    </DialogHeader>
+
+                    {/* Project Select */}
+                    <Select onValueChange={setSelectedProjectId}>
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select a project" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {projects.map((project) => (
+                                <SelectItem key={project.id} value={project.id}>
+                                    {project.project_name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <input
+                        type="date"
+                        className="w-full border rounded px-3 py-2 text-sm"
+                        onChange={(e) => setStartDate(e.target.value)}
+                        placeholder="Start Date"
+                    />
+
+                    <input
+                        type="date"
+                        className="w-full border rounded px-3 py-2 text-sm"
+                        onChange={(e) => setEndDate(e.target.value)}
+                        placeholder="End Date"
+                    />
+
+                    <input
+                        type="number"
+                        min={1}
+                        max={100}
+                        className="w-full border rounded px-3 py-2 text-sm"
+                        placeholder="Allocation Percentage"
+                        onChange={(e) => setPercentage(Number(e.target.value))}
+                    />
+
+                    <input
+                        type="text"
+                        className="w-full border rounded px-3 py-2 text-sm"
+                        placeholder="Project Role"
+                        onChange={(e) => setProjectRole(e.target.value)}
+                    />
+
+                    <DialogFooter>
+                        <Button
+                            onClick={handleAllocate}
+                            disabled={!selectedProjectId || !startDate || !endDate || !percentage || !projectRole}
+                            className="w-full"
+                        >
+                            Confirm Allocation
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
         </div>
     )
 }
