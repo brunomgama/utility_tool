@@ -1,5 +1,5 @@
 create table users (
-    id uuid primary key default uuid_generate_v4(),
+    id text PRIMARY KEY,
     name text not null,
     email text not null,
     location text not null,
@@ -23,7 +23,7 @@ VALUES
 
 CREATE TABLE projects (
     id text PRIMARY KEY,
-    project_lead uuid NOT NULL REFERENCES users(id) ON DELETE SET NULL,
+    project_lead text NOT NULL REFERENCES users(id) ON DELETE SET NULL,
     angebotsnummer text NOT NULL,
     client text NOT NULL,
     frame_contract text NOT NULL,
@@ -71,7 +71,7 @@ INSERT INTO projects (
 CREATE TABLE allocations (
     id uuid primary key default uuid_generate_v4(),
     project_id text NOT NULL REFERENCES projects(id) ON DELETE SET NULL,
-    user_id uuid NOT NULL REFERENCES users(id) ON DELETE SET NULL,
+    user_id text NOT NULL REFERENCES users(id) ON DELETE SET NULL,
     start_date date NOT NULL,
     end_date date NOT NULL,
     percentage numeric NOT NULL,
@@ -103,7 +103,7 @@ INSERT INTO project_technologies (project_id, technology) VALUES
 CREATE TABLE time_tracking (
     id uuid primary key default uuid_generate_v4(),
     project_id text NOT NULL REFERENCES projects(id) ON DELETE SET NULL,
-    user_id uuid NOT NULL REFERENCES users(id) ON DELETE SET NULL,
+    user_id text NOT NULL REFERENCES users(id) ON DELETE SET NULL,
     date date NOT NULL,
     hours numeric NOT NULL,
     description text NOT NULL,

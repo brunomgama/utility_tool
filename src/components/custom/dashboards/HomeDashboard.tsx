@@ -36,7 +36,6 @@ const formatDate = (date: Date) => {
 }
 
 export default function DashboardPage() {
-
     const [users, setUsers] = useState<UserSchema[]>([])
     const [projects, setProjects] = useState<ProjectSchema[]>([])
     const [allocations, setAllocations] = useState<(AllocationSchema & { project?: ProjectSchema })[]>([])

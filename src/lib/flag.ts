@@ -51,9 +51,6 @@ export const getCountryFlag = (country: string): string | null => {
     const tokens = normalized.split(/[\s,]+/)
 
     for (const token of tokens) {
-
-        console.log(token)
-        console.log(countryMap[token])
         if (countryMap[token]) {
             return countryMap[token]
         }
