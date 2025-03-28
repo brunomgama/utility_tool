@@ -14,9 +14,5 @@ export default async function TimesheetsPage() {
         );
     }
 
-    console.log('session', session);
-    console.log('email', email);
-    console.log('auth_id', session!.user.sub);
-
     return <OnboardingForm email={email} auth_id={session!.user.sub}/>;
 }
