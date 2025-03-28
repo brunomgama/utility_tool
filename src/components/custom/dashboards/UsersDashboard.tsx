@@ -32,9 +32,7 @@ export default function UsersDashboard() {
     const [expanded, setExpanded] = useState<Record<string, boolean>>({})
     const [statusFilter, setStatusFilter] = useState<string[]>([])
     const [users, setUsers] = useState<UserSchema[]>([])
-    const [projects, setProjects] = useState<ProjectResumedSchema[]>([])
     const [allocations, setAllocations] = useState<(AllocationSchema & { project?: ProjectResumedSchema })[]>([])
-    const [loading, setLoading] = useState(true)
 
     const columns: ColumnDef<UserSchema>[] = [
         {
@@ -175,7 +173,6 @@ export default function UsersDashboard() {
 
     useEffect(() => {
         const fetchData = async () => {
-            setLoading(true)
 
             const [{ data: usersData, error: usersError }, { data: projectsData, error: projectsError }, { data: allocationsData, error: allocationsError }] = await Promise.all([
                 supabase.from("users").select("id, name, email, location, role, department, status"),
@@ -185,12 +182,11 @@ export default function UsersDashboard() {
 
             if (usersError || projectsError || allocationsError) {
                 console.error("Fetch error", { usersError, projectsError, allocationsError })
-                setLoading(false)
                 return
             }
 
             const enrichedAllocations = allocationsData!.map((allocation: AllocationSchema) => {
-                const projectMatch = projectsData!.find((p: any) => p.id === allocation.project_id)
+                const projectMatch = projectsData!.find((p: ProjectResumedSchema) => p.id === allocation.project_id)
 
                 const project: ProjectResumedSchema | undefined = projectMatch
                     ? {
@@ -205,9 +201,7 @@ export default function UsersDashboard() {
             })
 
             setUsers(usersData!)
-            setProjects(projectsData!)
             setAllocations(enrichedAllocations)
-            setLoading(false)
         }
 
         fetchData()

@@ -140,7 +140,7 @@ export default function OnboardingForm({email, auth_id}: { email: string, auth_i
                     <FormField
                         control={form.control}
                         name="name"
-                        render={({ field, fieldState }) => (
+                        render={({ field }) => (
                             <FormItem className="mb-4">
                                 <FormLabel>Full Name</FormLabel>
                                 <FormControl>
@@ -217,7 +217,7 @@ export default function OnboardingForm({email, auth_id}: { email: string, auth_i
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                <FormDescription>Select the department you'll be working in.</FormDescription>
+                                <FormDescription>Select the department you will be working in.</FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -288,7 +288,8 @@ export default function OnboardingForm({email, auth_id}: { email: string, auth_i
 
                     <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
                         <p>
-                            Please review your information carefully. Once submitted, your account will be created and pending
+                            Please review your information carefully. Once submitted, your account will be created and
+                            pending
                             approval from an administrator.
                         </p>
                     </div>
@@ -305,7 +306,7 @@ export default function OnboardingForm({email, auth_id}: { email: string, auth_i
                     <div className="space-y-2">
                         <h3 className="text-xl font-semibold">Account Created Successfully</h3>
                         <p className="text-muted-foreground">
-                            Your account has been created and is pending approval from an administrator. You'll receive an email once
+                            Your account has been created and is pending approval from an administrator. You will receive an email once
                             your account is activated.
                         </p>
                     </div>
@@ -313,7 +314,7 @@ export default function OnboardingForm({email, auth_id}: { email: string, auth_i
                 </div>
             )
         }
-    }, [currentStep, form.getValues()])
+    }, [currentStep, form, router])
 
     return (
         <div className="flex min-h-screen bg-muted/30 items-center justify-center p-4">
