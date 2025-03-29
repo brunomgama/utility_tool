@@ -17,6 +17,7 @@ export type ProjectSchema = {
     budget: number
     period_start: Date;
     period_end: Date;
+    technologies?: string[],
 };
 
 export type ProjectResumedSchema = {
@@ -25,8 +26,3 @@ export type ProjectResumedSchema = {
     client: string
     status: "Active" | "Inactive" | "Pending" | "Finished"
 }
-
-export type ProjectWithTech = ProjectSchema & {
-    technologies: string[];
-    projectManager: string;
-};
