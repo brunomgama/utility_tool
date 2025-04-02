@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,} from "@/components/ui/alert-dialog"
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {UserAllocation, UserSchema} from "@/types/user";
 import {getInitials} from "@/lib/initial";
 import {supabase} from "@/lib/supabase";
@@ -33,7 +33,7 @@ export default function UserDetailPage({ userId }: { userId: string }) {
     const [percentage, setPercentage] = useState<number>(0)
     const [projectRole, setProjectRole] = useState<string>("")
 
-    const processedUserId = React.useMemo(() => userId.replace("%7C", "|"), [userId])
+    const processedUserId = useMemo(() => userId.replace("%7C", "|"), [userId])
 
     useEffect(() => {
         const fetchUserData = async () => {

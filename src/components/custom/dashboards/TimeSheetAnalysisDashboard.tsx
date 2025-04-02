@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {UserSchema} from "@/types/user";
 import {ProjectSchema} from "@/types/project";
 import {supabase} from "@/lib/supabase";
@@ -81,7 +81,7 @@ export default function TimeAnalyticsPage() {
     const approvedHours = filteredEntries.filter((e) => e.status === "Approved").reduce((sum, e) => sum + e.hours, 0)
     const approvedPercentage = totalHours > 0 ? (approvedHours / totalHours) * 100 : 0
 
-    const departments = React.useMemo(() => {
+    const departments = useMemo(() => {
         return Array.from(new Set(users.map((u) => u.department || "Unassigned")))
     }, [users])
 

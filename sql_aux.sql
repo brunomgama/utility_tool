@@ -1,11 +1,11 @@
-create table users (
-    id text PRIMARY KEY,
-    name text not null,
-    email text not null,
-    location text not null,
-    role text not null,
-    department text not null,
-    status text not null
+CREATE TABLE USERS (
+    ID TEXT PRIMARY KEY,
+    NAME TEXT NOT NULL,
+    EMAIL TEXT NOT NULL,
+    LOCATION TEXT NOT NULL,
+    ROLE TEXT NOT NULL,
+    DEPARTMENT TEXT NOT NULL,
+    STATUS TEXT NOT NULL
 );
 
 INSERT INTO users ("id", "name", "email", "location", "role", "department", "status")
@@ -21,25 +21,25 @@ VALUES
     ('8c8a4c01-b262-4dae-a6e9-d06c48f48c6d', 'David Kim', 'd.kim@company.com', 'Paris, FR','User', 'IT', 'Active'),
     ('c2e7b75f-7d0b-42ca-a79b-f3354892713a', 'Alex Allan', 'alex.allan@company.com', 'São Paulo, BR','User', 'IT', 'Active');
 
-CREATE TABLE projects (
-    id text PRIMARY KEY,
-    project_lead text NOT NULL REFERENCES users(id) ON DELETE SET NULL,
-    angebotsnummer text NOT NULL,
-    client text NOT NULL,
-    frame_contract text,
-    purchase_order text NOT NULL,
-    project_name text NOT NULL,
-    link_to_project_folder text NOT NULL,
-    target_margin numeric,
-    revenue numeric NOT NULL,
-    man_days numeric NOT NULL,
-    status text NOT NULL,
-    description text NOT NULL,
-    completed_days text NOT NULL,
-    budget numeric NOT NULL,
-    period_start date NOT NULL,
-    period_end date NOT NULL,
-    technologies TEXT[]
+CREATE TABLE PROJECTS (
+    ID TEXT PRIMARY KEY,
+    PROJECT_LEAD TEXT NOT NULL REFERENCES USERS(ID) ON DELETE SET NULL,
+    ANGEBOTSNUMMER TEXT NOT NULL,
+    CLIENT TEXT NOT NULL,
+    FRAME_CONTRACT TEXT,
+    PURCHASE_ORDER TEXT NOT NULL,
+    PROJECT_NAME TEXT NOT NULL,
+    LINK_TO_PROJECT_FOLDER TEXT NOT NULL,
+    TARGET_MARGIN NUMERIC,
+    REVENUE NUMERIC NOT NULL,
+    MAN_DAYS NUMERIC NOT NULL,
+    STATUS TEXT NOT NULL,
+    DESCRIPTION TEXT NOT NULL,
+    COMPLETED_DAYS TEXT NOT NULL,
+    BUDGET NUMERIC NOT NULL,
+    PERIOD_START DATE NOT NULL,
+    PERIOD_END DATE NOT NULL,
+    TECHNOLOGIES TEXT[]
 );
 
 INSERT INTO projects (
@@ -66,16 +66,14 @@ INSERT INTO projects (
           '2023-09-01', '2024-01-31', ARRAY['React', 'Java']
       );
 
-
-
-CREATE TABLE allocations (
-    id uuid primary key default uuid_generate_v4(),
-    project_id text NOT NULL REFERENCES projects(id) ON DELETE SET NULL,
-    user_id text NOT NULL REFERENCES users(id) ON DELETE SET NULL,
-    start_date date NOT NULL,
-    end_date date,
-    percentage numeric NOT NULL,
-    role text NOT NULL
+CREATE TABLE ALLOCATIONS (
+    ID UUID PRIMARY KEY DEFAULT UUID_GENERATE_V4(),
+    PROJECT_ID TEXT NOT NULL REFERENCES PROJECTS(ID) ON DELETE SET NULL,
+    USER_ID TEXT NOT NULL REFERENCES USERS(ID) ON DELETE SET NULL,
+    START_DATE DATE NOT NULL,
+    END_DATE DATE,
+    PERCENTAGE NUMERIC NOT NULL,
+    ROLE TEXT NOT NULL
 );
 
 INSERT INTO allocations (project_id, user_id, start_date, end_date, percentage, role) VALUES
@@ -87,16 +85,16 @@ INSERT INTO allocations (project_id, user_id, start_date, end_date, percentage, 
     ('PRJ-003', '79abeeb2-c440-460b-a8a8-76c96c4f017b', '2023-10-01', '2024-01-31', 0.6, 'DevOps Specialist');
 
 
-CREATE TABLE time_tracking (
-    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE SET NULL,
-    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE SET NULL,
-    date DATE NOT NULL,
-    hours NUMERIC NOT NULL,
-    description TEXT NOT NULL,
-    status TEXT NOT NULL CHECK (status IN ('Draft', 'Submitted', 'Approved', 'Rejected')),
-    tags TEXT[],
-    billable BOOLEAN
+CREATE TABLE TIME_TRACKING (
+    ID UUID PRIMARY KEY DEFAULT UUID_GENERATE_V4(),
+    PROJECT_ID TEXT NOT NULL REFERENCES PROJECTS(ID) ON DELETE SET NULL,
+    USER_ID TEXT NOT NULL REFERENCES USERS(ID) ON DELETE SET NULL,
+    DATE DATE NOT NULL,
+    HOURS NUMERIC NOT NULL,
+    DESCRIPTION TEXT NOT NULL,
+    STATUS TEXT NOT NULL CHECK (STATUS IN ('DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED')),
+    TAGS TEXT[],
+    BILLABLE BOOLEAN
 );
 
 INSERT INTO time_tracking (id, project_id, user_id, date, hours, description, status, tags, billable) VALUES
@@ -110,3 +108,84 @@ INSERT INTO time_tracking (id, project_id, user_id, date, hours, description, st
 ('5d0389f5-78a6-4e9b-aac4-86562a99d238', 'PRJ-002', '7ec46305-ace1-4730-be14-58983d077e85', '2024-02-20', 6.5, 'Bug fixing', 'Submitted', ARRAY['Bug'], true),
 ('1940ad6a-3386-4d59-97bc-6f5027a18d0e', 'PRJ-003', '7851514c-661d-4190-9ee1-7e3c63b28e38', '2024-01-29', 2.0, 'Feature development', 'Submitted', ARRAY['Development'], true),
 ('2033b32f-47e4-4592-a60b-4018322058f5', 'PRJ-002', '7851514c-661d-4190-9ee1-7e3c63b28e38', '2024-01-18', 7.3, 'Documentation', 'Rejected', ARRAY['Documentation'], true);
+
+
+
+
+
+
+
+
+
+
+CREATE TABLE DEPARTMENTS (
+    ID UUID PRIMARY KEY DEFAULT GEN_RANDOM_UUID(),
+    NAME TEXT NOT NULL
+);
+
+INSERT INTO departments (name) VALUES
+('Engineering'),
+('Marketing'),
+('Sales'),
+('Product'),
+('Human Resources');
+
+CREATE TABLE TEAMS (
+    ID UUID PRIMARY KEY DEFAULT GEN_RANDOM_UUID(),
+    NAME TEXT NOT NULL,
+    DEPARTMENT_ID UUID NOT NULL REFERENCES DEPARTMENTS(ID) ON DELETE CASCADE
+);
+
+INSERT INTO TEAMS (id, name, department_id) VALUES
+('f8e2de84-62f0-4d3b-930b-4f4a2de9321f', 'Platform Team', '466e4099-33fa-431d-b17e-84e94936e0f4'),
+('cebc4ad7-51f1-4782-bbf4-dfbfc6dfb2ef', 'Content Team', '71d0989b-f0bd-44f9-926d-306e80ed02b4'),
+('db235a4e-6d71-4144-b5d8-5cb6ec7f0dd3', 'Sales Enablement', '58fc917a-3e69-4393-a7f2-9ab3d85eba55'),
+('7dfcb3e1-9460-499e-a5c0-0e5fae218b26', 'Product Strategy', '0da43815-e7e5-4cf7-8426-5014930023e8'),
+('a7bc49b2-bcd5-4b8d-8592-35d1fa2a252b', 'Recruiting Team', '7128c178-db61-4752-813d-c65ab4378cad');
+
+
+CREATE TABLE GOALS (
+    ID UUID PRIMARY KEY DEFAULT GEN_RANDOM_UUID(),
+    TITLE TEXT NOT NULL,
+    DESCRIPTION TEXT,
+    PERIOD_EVALUATION TEXT NOT NULL,
+    LEVEL TEXT NOT NULL,
+    STATUS TEXT NOT NULL,
+    PRIORITY TEXT NOT NULL,
+    PROGRESS NUMERIC NOT NULL DEFAULT 0,
+    START_DATE DATE NOT NULL,
+    END_DATE DATE NOT NULL,
+    OWNER_ID TEXT NOT NULL REFERENCES USERS(ID) ON DELETE SET NULL,
+    TEAM_ID UUID REFERENCES TEAMS(ID) ON DELETE SET NULL,
+    DEPARTMENT_ID UUID REFERENCES DEPARTMENTS(ID) ON DELETE SET NULL,
+    CREATED_AT TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UPDATED_AT TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+INSERT INTO GOALS (id, title, description, period_evaluation, level, status, priority, progress,start_date, end_date, owner_id, team_id, department_id) VALUES
+('0d1a0f2d-faa9-4fc3-92c3-8b5fc7a181e9', 'Improve Platform Reliability', 'Reduce downtime and improve system uptime to 99.9%', 'Quarterly', 'Team', 'In Progress', 'High', 45,
+ '2025-01-01', '2025-03-31', 'auth0|67e52261b7b1cd59493a3e0a', 'f8e2de84-62f0-4d3b-930b-4f4a2de9321f', '466e4099-33fa-431d-b17e-84e94936e0f4'),
+('c46d9b21-6a17-42f7-b626-7fc9aa0188b7', 'Launch Q2 Content Campaign', 'Create and publish 20 new blog posts and 5 case studies', 'Quarterly', 'Team', 'Not Started', 'Medium', 0,
+ '2025-04-01', '2025-06-30', 'auth0|67e52261b7b1cd59493a3e0a', 'cebc4ad7-51f1-4782-bbf4-dfbfc6dfb2ef', '71d0989b-f0bd-44f9-926d-306e80ed02b4'),
+('3fcb8f6f-1de3-4178-a137-96c763f91a97', 'Increase Lead Conversion Rate', 'Raise conversion rate from 12% to 18% across all channels', 'Quarterly', 'Department', 'In Progress', 'High', 60,
+ '2025-01-01', '2025-03-31', 'auth0|67e52261b7b1cd59493a3e0a', 'db235a4e-6d71-4144-b5d8-5cb6ec7f0dd3', '58fc917a-3e69-4393-a7f2-9ab3d85eba55'),
+('ecaa7bc4-5146-41bb-b195-02f45a01b4ed', 'Define 2025 Product Roadmap', 'Complete planning and scope definition for next year', 'Annual', 'Department', 'Completed', 'High', 100,
+ '2025-01-01', '2025-12-31', 'auth0|67e52261b7b1cd59493a3e0a', '7dfcb3e1-9460-499e-a5c0-0e5fae218b26', '0da43815-e7e5-4cf7-8426-5014930023e8'),
+('a20536d2-d676-40c5-b317-6f9cc73f7d71', 'Streamline Hiring Process', 'Reduce average hiring time from 45 to 30 days', 'Quarterly', 'Team', 'In Progress', 'Medium', 35,
+ '2025-01-01', '2025-03-31', 'auth0|67e52261b7b1cd59493a3e0a', 'a7bc49b2-bcd5-4b8d-8592-35d1fa2a252b', '7128c178-db61-4752-813d-c65ab4378cad');
+
+CREATE TABLE TASKS (
+    ID UUID PRIMARY KEY DEFAULT GEN_RANDOM_UUID(),
+    TITLE TEXT NOT NULL,
+    COMPLETED BOOLEAN NOT NULL DEFAULT FALSE,
+    GOAL_ID UUID NOT NULL REFERENCES GOALS(ID) ON DELETE CASCADE,
+    CREATED_AT TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UPDATED_AT TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+INSERT INTO TASKS (id, title, completed, goal_id) VALUES
+('9be7aa3d-9db3-43a0-96ed-c8b9ac78893e', 'Set up monitoring alerts', TRUE, '0d1a0f2d-faa9-4fc3-92c3-8b5fc7a181e9'),
+('b3e42388-fce6-4622-9371-6a41fa7fe303', 'Draft Q2 blog topics', FALSE, 'c46d9b21-6a17-42f7-b626-7fc9aa0188b7'),
+('e1c99e2d-4796-41f4-bb71-0edb59aa397b', 'Revamp email templates', TRUE, '3fcb8f6f-1de3-4178-a137-96c763f91a97'),
+('d77c38c5-985f-4f2e-bb01-33066a43b471', 'Finalize product themes', TRUE, 'ecaa7bc4-5146-41bb-b195-02f45a01b4ed'),
+('a04c6d26-1cc0-45ae-83bb-49933e7b8c89', 'Automate interview scheduling', FALSE, 'a20536d2-d676-40c5-b317-6f9cc73f7d71');

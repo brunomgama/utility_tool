@@ -20,7 +20,14 @@ import {
   UserCog,
   UserSearch
 } from "lucide-react";
-import {TbAddressBook, TbBuildingCommunity, TbCalendarTime, TbLayoutDashboard, TbUsers} from "react-icons/tb";
+import {
+  TbAddressBook,
+  TbBuildingCommunity,
+  TbCalendarTime, TbCheckbox,
+  TbLayoutDashboard,
+  TbTargetArrow,
+  TbUsers
+} from "react-icons/tb";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -272,6 +279,39 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
                             <div className="ml-2 flex items-center  gap-2">
                               <p className="text-sm font-medium">Time Sheet Analysis</p>
                             </div>
+                        )}
+                      </motion.li>
+                    </Link>
+
+                    <Separator className="w-full" />
+                    <Link
+                        href="/tasks"
+                        className={cn(
+                            "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5   transition hover:bg-muted hover:text-primary",
+
+                            pathname?.includes("tasks") && "bg-muted text-blue-600",
+                        )}
+                    >
+                      <TbCheckbox className="h-4 w-4" />{" "}
+                      <motion.li variants={variants}>
+                        {!isCollapsed && (
+                            <p className="ml-2 text-sm font-medium">Tasks</p>
+                        )}
+                      </motion.li>
+                    </Link>
+
+                    <Link
+                        href="/goals"
+                        className={cn(
+                            "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5   transition hover:bg-muted hover:text-primary",
+
+                            pathname?.includes("goals") && "bg-muted text-blue-600",
+                        )}
+                    >
+                      <TbTargetArrow className="h-4 w-4" />{" "}
+                      <motion.li variants={variants}>
+                        {!isCollapsed && (
+                            <p className="ml-2 text-sm font-medium">Goals</p>
                         )}
                       </motion.li>
                     </Link>
