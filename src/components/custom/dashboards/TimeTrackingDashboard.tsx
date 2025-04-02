@@ -46,7 +46,6 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
         tags: [],
         billable: false,
     })
-
     const [availableTags, setAvailableTags] = useState<string[]>([])
     const [tagInput, setTagInput] = useState("")
 
@@ -70,7 +69,7 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
         fetchCurrentUser()
     }, [session])
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         const { data: usersData, error: userError } = await supabase.from("users").select("*")
 
         let projectIds: string[] = []
@@ -115,7 +114,7 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
             setAllUsers(usersData)
             setProjects(projectsData)
         }
-    }
+    }, [isAdmin, currentUser, selectedUser])
 
     const fetchTimeEntries = useCallback(async () => {
         let query = supabase.from("time_tracking").select("*").order("date", { ascending: false })
@@ -142,7 +141,7 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
         if (currentUser) {
             fetchData()
         }
-    }, [currentUser, isAdmin, selectedUser])
+    }, [currentUser, fetchData])
 
     useEffect(() => {
         if (currentUser && (isAdmin ? selectedUser !== "" : true)) {

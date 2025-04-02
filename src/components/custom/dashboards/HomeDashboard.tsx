@@ -190,21 +190,6 @@ export default function DashboardPage() {
         Unassigned: "bg-gray-500",
     }
 
-    const recentActivities = [
-        ...timeEntries.map((entry) => ({
-            type: "time-entry" as const,
-            date: entry.date,
-            data: entry,
-        })),
-        ...allocations.map((allocation) => ({
-            type: "allocation" as const,
-            date: allocation.start_date,
-            data: allocation,
-        })),
-    ]
-        .sort((a, b) => b.date.getTime() - a.date.getTime())
-        .slice(0, 5)
-
     return (
         <div className={`transition-all duration-300 ${isCollapsed ? 'ml-[1rem]' : 'ml-[10rem]'} p-6`}>
             <div className="w-full space-y-6">
