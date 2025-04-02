@@ -317,7 +317,7 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
               </div>
               <div className="flex flex-col p-2">
                 <Link
-                  href="/error"
+                  href="/settings"
                   className="mt-auto flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5   transition hover:bg-muted hover:text-primary"
                 >
                   <Settings className="h-4 w-4 shrink-0" />{" "}
@@ -372,7 +372,7 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
                           asChild
                           className="flex items-center gap-2"
                       >
-                        <Link href="/error">
+                        <Link href="/profile">
                           <UserCircle className="h-4 w-4"/> Profile
                         </Link>
                       </DropdownMenuItem>
