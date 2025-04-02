@@ -379,35 +379,7 @@ export default function DashboardPage() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-4">
-                                        {recentActivities.map((activity, index) => {
-                                            if (activity.type === "time-entry") {
-                                                const entry = activity.data
-                                                const user = users.find((u) => u.id === entry.user_id)
-                                                const project = projects.find((p) => p.id === entry.project_id)
-
-                                                return (
-                                                    <div key={index} className="flex items-start gap-4">
-                                                        <Avatar className="mt-1">
-                                                            <AvatarFallback className="bg-primary text-primary-foreground">
-                                                                {getInitials(user?.name || "")}
-                                                            </AvatarFallback>
-                                                        </Avatar>
-                                                        <div className="space-y-1">
-                                                            <p className="text-sm font-medium">{user?.name} logged time</p>
-                                                            <p className="text-sm text-muted-foreground">
-                                                                {entry.hours} hours on {project?.project_name}
-                                                            </p>
-                                                            <div className="flex items-center gap-2">
-                                                                <Badge variant="outline" className="text-xs">
-                                                                    {entry.status}
-                                                                </Badge>
-                                                                <span className="text-xs text-muted-foreground">{formatDate(entry.date)}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )
-                                            }
-                                        })}
+                                        No recent activity
                                     </div>
                                 </CardContent>
                             </Card>

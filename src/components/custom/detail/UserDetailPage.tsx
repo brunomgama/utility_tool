@@ -17,6 +17,7 @@ import {getInitials} from "@/lib/initial";
 import {supabase} from "@/lib/supabase";
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {project_roles} from "@/types/roles";
 
 export default function UserDetailPage({ userId }: { userId: string }) {
     const [user, setUser] = useState<UserSchema | null>(null)
@@ -452,7 +453,6 @@ export default function UserDetailPage({ userId }: { userId: string }) {
                         <DialogTitle>Allocate to a Project</DialogTitle>
                     </DialogHeader>
 
-                    {/* Project Select */}
                     <Select onValueChange={setSelectedProjectId}>
                         <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select a project" />
@@ -480,21 +480,35 @@ export default function UserDetailPage({ userId }: { userId: string }) {
                         placeholder="End Date"
                     />
 
-                    <input
-                        type="number"
-                        min={1}
-                        max={100}
-                        className="w-full border rounded px-3 py-2 text-sm"
-                        placeholder="Allocation Percentage"
-                        onChange={(e) => setPercentage(Number(e.target.value))}
-                    />
+                    <div className="relative w-full">
+                        <input
+                            type="number"
+                            min={1}
+                            max={100}
+                            className="w-full border rounded px-3 py-2 pr-10 text-sm"
+                            placeholder="Allocation Percentage"
+                            onChange={(e) => {
+                                const value = Number(e.target.value)
+                                setPercentage(value / 100)
+                            }}
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">
+                            %
+                        </span>
+                    </div>
 
-                    <input
-                        type="text"
-                        className="w-full border rounded px-3 py-2 text-sm"
-                        placeholder="Project Role"
-                        onChange={(e) => setProjectRole(e.target.value)}
-                    />
+                    <Select onValueChange={(value) => setProjectRole(value)}>
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select a role"/>
+                        </SelectTrigger>
+                        <SelectContent>
+                            {project_roles.map((role) => (
+                                <SelectItem key={role} value={role}>
+                                {role}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
 
                     <DialogFooter>
                         <Button

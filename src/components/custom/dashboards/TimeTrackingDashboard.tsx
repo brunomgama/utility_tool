@@ -70,23 +70,52 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
         fetchCurrentUser()
     }, [session])
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const { data: usersData, error: userError } = await supabase.from("users").select("*")
-            const { data: projectsData, error: projectError } = await supabase
-                .from("projects")
-                .select("id, project_name, client, status")
+    const fetchData = async () => {
+        const { data: usersData, error: userError } = await supabase.from("users").select("*")
 
-            if (userError || projectError) {
-                console.error("Failed fetching users/projects", userError, projectError)
+        let projectIds: string[] = []
+
+        if (!isAdmin && currentUser) {
+            const { data: userAllocations, error: allocError } = await supabase
+                .from("allocations")
+                .select("project_id")
+                .eq("user_id", currentUser.id)
+
+            if (allocError) {
+                console.error("Error fetching allocations", allocError)
             } else {
-                setAllUsers(usersData)
-                setProjects(projectsData)
+                projectIds = userAllocations.map((a) => a.project_id)
+            }
+        } else if (isAdmin && selectedUser && selectedUser !== "all") {
+            const { data: userAllocations, error: allocError } = await supabase
+                .from("allocations")
+                .select("project_id")
+                .eq("user_id", selectedUser)
+
+            if (allocError) {
+                console.error("Error fetching allocations", allocError)
+            } else {
+                projectIds = userAllocations.map((a) => a.project_id)
             }
         }
 
-        fetchData()
-    }, [])
+        let projectsQuery = supabase
+            .from("projects")
+            .select("id, project_name, client, status")
+
+        if (projectIds.length > 0) {
+            projectsQuery = projectsQuery.in("id", projectIds)
+        }
+
+        const { data: projectsData, error: projectError } = await projectsQuery
+
+        if (userError || projectError) {
+            console.error("Failed fetching users/projects", userError, projectError)
+        } else {
+            setAllUsers(usersData)
+            setProjects(projectsData)
+        }
+    }
 
     const fetchTimeEntries = useCallback(async () => {
         let query = supabase.from("time_tracking").select("*").order("date", { ascending: false })
@@ -111,22 +140,30 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
 
     useEffect(() => {
         if (currentUser) {
+            fetchData()
+        }
+    }, [currentUser, isAdmin, selectedUser])
+
+    useEffect(() => {
+        if (currentUser && (isAdmin ? selectedUser !== "" : true)) {
             fetchTimeEntries()
         }
-    }, [currentUser, fetchTimeEntries])
+    }, [currentUser, isAdmin, selectedUser, selectedProject, fetchTimeEntries])
 
     const getUserById = (id: string) => allUsers.find((u) => u.id === id)
     const getProjectById = (id: string) => projects.find((p) => p.id === id)
 
     const handleSaveEntry = async () => {
-        if (!newEntry.project_id || !newEntry.hours || newEntry.hours <= 0 || !currentUser) {
-            return
-        }
+        if (!newEntry.project_id || !newEntry.hours || newEntry.hours <= 0 || !currentUser) return;
+
+        const dateOnly = format(newEntry.date!, "yyyy-MM-dd") // 👈 format to date string
+
+        console.log("dateOnly", dateOnly)
 
         const payload = {
             user_id: currentUser.id,
             project_id: newEntry.project_id,
-            date: newEntry.date,
+            date: dateOnly,
             hours: newEntry.hours,
             description: newEntry.description,
             status: newEntry.status,
@@ -329,7 +366,7 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
                         : entry.status === "Rejected"
                             ? "border-red-200"
                             : entry.status === "Submitted"
-                                ? "border-blue-200"
+                                ? "border-purple-200"
                                 : "border-gray-200"
                 )}
             >
@@ -356,7 +393,7 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
                                         : entry.status === "Rejected"
                                             ? "bg-red-100 text-red-800"
                                             : entry.status === "Submitted"
-                                                ? "bg-blue-100 text-blue-800"
+                                                ? "bg-purple-100 text-purple-800"
                                                 : "bg-gray-100 text-gray-800"
                                 )}
                             >
@@ -518,7 +555,16 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
                                             return (
                                                 <div
                                                     key={entry.id}
-                                                    className="text-xs p-1 rounded bg-primary/10 cursor-pointer"
+                                                    className={cn(
+                                                        "text-xs p-1 rounded cursor-pointer",
+                                                        entry.status === "Draft"
+                                                            ? "bg-gray-200 text-gray-700"
+                                                            : entry.status === "Submitted"
+                                                                ? "bg-purple-100 text-purple-800"
+                                                                : entry.status === "Approved"
+                                                                    ? "bg-green-100 text-green-800"
+                                                                : "bg-primary/10"
+                                                    )}
                                                     onClick={() => handleEditEntry(entry)}
                                                 >
                                                     <div className="font-medium truncate">{project?.project_name}</div>
@@ -656,7 +702,16 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
                                                         return (
                                                             <div
                                                                 key={i}
-                                                                className="text-xs p-1 mb-1 rounded bg-primary/10 truncate cursor-pointer"
+                                                                className={cn(
+                                                                    "text-xs p-1 mb-1 rounded truncate cursor-pointer",
+                                                                    entry.status === "Draft"
+                                                                        ? "bg-gray-200 text-gray-700"
+                                                                        : entry.status === "Submitted"
+                                                                            ? "bg-purple-100 text-purple-800"
+                                                                            : entry.status === "Approved"
+                                                                                ? "bg-green-100 text-green-800"
+                                                                            : "bg-primary/10"
+                                                                )}
                                                                 onClick={() => handleEditEntry(entry)}
                                                             >
                                                                 {projectName.length > 15 ? `${projectName.slice(0, 15)}...` : projectName}
@@ -741,10 +796,9 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
                                 </div>
                             )}
 
-                            <div className="space-y-2">
-                                <Label htmlFor="project">Project</Label>
+                            <div className="w-full">
                                 <Select value={selectedProject} onValueChange={setSelectedProject}>
-                                    <SelectTrigger id="project">
+                                    <SelectTrigger id="project" className="w-full">
                                         <SelectValue placeholder="Select a project"/>
                                     </SelectTrigger>
                                     <SelectContent>
@@ -855,7 +909,7 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
 
                 {/* Time Entry Dialog */}
                 <Dialog open={isEntryDialogOpen} onOpenChange={setIsEntryDialogOpen}>
-                    <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[500px]">
                         <DialogHeader>
                             <DialogTitle>{selectedEntry ? "Edit Time Entry" : "Add Time Entry"}</DialogTitle>
                             <DialogDescription>
@@ -871,13 +925,14 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
                                         id="entry-date"
                                         type="date"
                                         value={format(new Date(newEntry.date || new Date()), "yyyy-MM-dd")}
-                                        onChange={(e) =>
-                                            setNewEntry({
-                                                ...newEntry,
-                                                date: e.target.value ? new Date(e.target.value) : new Date(),
-                                            })
-                                        }
+                                        onChange={(e) => {
+                                            const [year, month, day] = e.target.value.split("-").map(Number)
+                                            const fixedDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0))
+                                            setNewEntry({ ...newEntry, date: fixedDate })
+                                        }}
                                     />
+
+
                                 </div>
 
                                 <div className="space-y-2">
@@ -899,7 +954,7 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
+                            <div className="space-y-2 w-full">
                                 <Label htmlFor="entry-project">Project</Label>
                                 <Select
                                     value={newEntry.project_id || ""}
@@ -910,7 +965,7 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
                                         })
                                     }
                                 >
-                                    <SelectTrigger id="entry-project">
+                                    <SelectTrigger id="entry-project" className={"w-full"}>
                                         <SelectValue placeholder="Select a project"/>
                                     </SelectTrigger>
                                     <SelectContent>

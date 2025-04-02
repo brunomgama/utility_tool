@@ -447,7 +447,7 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
                           asChild
                           className="flex items-center gap-2"
                       >
-                        <Link href="/settings/profile">
+                        <Link href="/profile">
                           <UserCircle className="h-4 w-4"/> Profile
                         </Link>
                       </DropdownMenuItem>
