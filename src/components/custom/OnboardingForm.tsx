@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {useCallback, useState} from "react";
 import { supabase } from "@/lib/supabase";
 import { UserSchema } from "@/types/user";
-import { departments } from "@/types/departments";
+import {departments} from "@/types/department";
 
 const formSchema = z.object({
     name: z.string().min(2, { message: "Name must be at least 2 characters." }),

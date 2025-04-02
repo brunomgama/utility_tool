@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import {format, isAfter, isBefore, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, addMonths, addQuarters, addYears, subMonths, subQuarters, subYears,} from "date-fns"
-import {CalendarIcon, Check, ChevronLeft, ChevronRight, Clock, Edit, MoreHorizontal, Plus, Search, Target, Trash2,} from "lucide-react"
+import {CalendarIcon, Check, ChevronLeft, ChevronRight, Clock, Edit, MoreHorizontal, Plus, Target, Trash2,} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -152,10 +152,12 @@ export default function GoalsDashboardPage() {
     const [newTaskTitle, setNewTaskTitle] = useState("")
     const [currentPeriod, setCurrentPeriod] = useState<GoalPeriod>("quarterly")
     const [currentDate, setCurrentDate] = useState<Date>(new Date())
-    const [filterLevel, setFilterLevel] = useState<GoalLevel | "all">("all")
-    const [filterStatus, setFilterStatus] = useState<GoalStatus | "all">("all")
-    const [filterOwner, setFilterOwner] = useState<string | "all">("all")
-    const [searchQuery, setSearchQuery] = useState("")
+
+    const [filterLevel] = useState<GoalLevel | "all">("all")
+    const [filterStatus] = useState<GoalStatus | "all">("all")
+    const [filterOwner] = useState<string | "all">("all")
+    const [searchQuery] = useState("")
+
     const [isSaving, setIsSaving] = useState(false)
 
     useEffect(() => {
