@@ -109,15 +109,6 @@ INSERT INTO time_tracking (id, project_id, user_id, date, hours, description, st
 ('1940ad6a-3386-4d59-97bc-6f5027a18d0e', 'PRJ-003', '7851514c-661d-4190-9ee1-7e3c63b28e38', '2024-01-29', 2.0, 'Feature development', 'Submitted', ARRAY['Development'], true),
 ('2033b32f-47e4-4592-a60b-4018322058f5', 'PRJ-002', '7851514c-661d-4190-9ee1-7e3c63b28e38', '2024-01-18', 7.3, 'Documentation', 'Rejected', ARRAY['Documentation'], true);
 
-
-
-
-
-
-
-
-
-
 CREATE TABLE DEPARTMENTS (
     ID UUID PRIMARY KEY DEFAULT GEN_RANDOM_UUID(),
     NAME TEXT NOT NULL
@@ -174,7 +165,7 @@ INSERT INTO GOALS (id, title, description, period_evaluation, level, status, pri
 ('a20536d2-d676-40c5-b317-6f9cc73f7d71', 'Streamline Hiring Process', 'Reduce average hiring time from 45 to 30 days', 'Quarterly', 'Team', 'In Progress', 'Medium', 35,
  '2025-01-01', '2025-03-31', 'auth0|67e52261b7b1cd59493a3e0a', 'a7bc49b2-bcd5-4b8d-8592-35d1fa2a252b', '7128c178-db61-4752-813d-c65ab4378cad');
 
-CREATE TABLE TASKS (
+CREATE TABLE GOAL_TASKS (
     ID UUID PRIMARY KEY DEFAULT GEN_RANDOM_UUID(),
     TITLE TEXT NOT NULL,
     COMPLETED BOOLEAN NOT NULL DEFAULT FALSE,
@@ -183,9 +174,84 @@ CREATE TABLE TASKS (
     UPDATED_AT TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-INSERT INTO TASKS (id, title, completed, goal_id) VALUES
+INSERT INTO GOAL_TASKS (id, title, completed, goal_id) VALUES
 ('9be7aa3d-9db3-43a0-96ed-c8b9ac78893e', 'Set up monitoring alerts', TRUE, '0d1a0f2d-faa9-4fc3-92c3-8b5fc7a181e9'),
 ('b3e42388-fce6-4622-9371-6a41fa7fe303', 'Draft Q2 blog topics', FALSE, 'c46d9b21-6a17-42f7-b626-7fc9aa0188b7'),
 ('e1c99e2d-4796-41f4-bb71-0edb59aa397b', 'Revamp email templates', TRUE, '3fcb8f6f-1de3-4178-a137-96c763f91a97'),
 ('d77c38c5-985f-4f2e-bb01-33066a43b471', 'Finalize product themes', TRUE, 'ecaa7bc4-5146-41bb-b195-02f45a01b4ed'),
 ('a04c6d26-1cc0-45ae-83bb-49933e7b8c89', 'Automate interview scheduling', FALSE, 'a20536d2-d676-40c5-b317-6f9cc73f7d71');
+
+CREATE TABLE EPICS (
+    ID UUID PRIMARY KEY DEFAULT GEN_RANDOM_UUID(),
+    TITLE TEXT NOT NULL,
+    DESCRIPTION TEXT,
+    COLOR TEXT
+);
+
+INSERT INTO epics (id, title, description, color) VALUES
+    ('660c5d94-6fec-49cf-9f0b-436dffce2c0e', 'Authentication Refactor', 'Refactor the entire Auth flow using Auth0', '#FF5733'),
+    ('859f2598-f85a-42ff-9456-8aeee65f2a2c', 'Mobile Redesign', 'New UX/UI for mobile app', '#33A1FF'),
+    ('f4afc13b-bf1f-41fe-8699-ba8f1136fa28', 'Billing System', 'Migrate billing to Stripe', '#8D33FF'),
+    ('003b8b69-71a9-48b4-b170-c3bf0d2d35c5', 'Performance Audit', 'Improve API response times', '#33FF88'),
+    ('2d17d6c4-8649-44d4-8f3a-10ebec3232c0', 'Dark Mode Rollout', 'Add dark mode across all screens', '#FFD700');
+
+CREATE TABLE TASKS (
+    ID UUID PRIMARY KEY DEFAULT GEN_RANDOM_UUID(),
+    TITLE TEXT NOT NULL,
+    TYPE TEXT CHECK (TYPE IN ('BUG', 'FEATURE', 'TASK', 'IMPROVEMENT', 'EPIC')) NOT NULL,
+    PRIORITY TEXT CHECK (PRIORITY IN ('LOWEST', 'LOW', 'MEDIUM', 'HIGH', 'HIGHEST')) NOT NULL,
+    LABELS TEXT[],
+    EPIC_ID UUID REFERENCES EPICS(ID) ON DELETE SET NULL,
+    DESCRIPTION TEXT,
+    ASSIGNEE_ID TEXT NOT NULL REFERENCES USERS(ID) ON DELETE SET NULL,
+    REPORTER_ID TEXT NOT NULL REFERENCES USERS(ID) ON DELETE SET NULL,
+    STATUS TEXT CHECK (STATUS IN ('ON_HOLD', 'BLOCKED', 'IN_PROGRESS', 'REVIEW', 'DONE')) NOT NULL,
+    CREATED_AT TIMESTAMP NOT NULL DEFAULT NOW(),
+    UPDATED_AT TIMESTAMP NOT NULL DEFAULT NOW(),
+    DUE_DATE TIMESTAMP,
+    ESTIMATED_HOURS NUMERIC,
+    ACTUAL_HOURS NUMERIC,
+    RELATED_TASK_IDS UUID[],
+    SUBTASK_IDS UUID[]
+);
+
+INSERT INTO tasks (title, type, priority, labels, epic_id, description,assignee_id, reporter_id, status,due_date, estimated_hours, actual_hours,related_task_ids, subtask_ids) VALUES
+      ('Implement Auth0 Roles','FEATURE','HIGH',ARRAY['auth', 'backend'],'660c5d94-6fec-49cf-9f0b-436dffce2c0e','Set up role-based access control with Auth0 rules.','auth0|67e52261b7b1cd59493a3e0a','auth0|67e52261b7b1cd59493a3e0a','IN_PROGRESS',NOW() + INTERVAL '5 days',6,NULL,NULL,NULL),
+      ('Revamp Mobile Navigation','IMPROVEMENT','MEDIUM',ARRAY['mobile', 'design'],'859f2598-f85a-42ff-9456-8aeee65f2a2c','Improve mobile UX navigation structure and transitions.','auth0|67e52261b7b1cd59493a3e0a','auth0|67e52261b7b1cd59493a3e0a','ON_HOLD',NOW() + INTERVAL '7 days',4,NULL,NULL,NULL),
+      ('Handle Stripe Webhook Failures','BUG','HIGHEST',ARRAY['billing', 'backend'],'f4afc13b-bf1f-41fe-8699-ba8f1136fa28','Fix missing logic in handling Stripe webhook errors.','auth0|67e52261b7b1cd59493a3e0a','auth0|67e52261b7b1cd59493a3e0a','BLOCKED',NOW() + INTERVAL '3 days',3,NULL,NULL,NULL),
+      ('Analyze Slow API Endpoints','TASK','MEDIUM',ARRAY['performance', 'metrics'],'003b8b69-71a9-48b4-b170-c3bf0d2d35c5','Audit slowest API endpoints and collect metrics.','auth0|67e52261b7b1cd59493a3e0a','auth0|67e52261b7b1cd59493a3e0a','REVIEW',NOW() + INTERVAL '2 days',5,4,NULL,NULL),
+      ('Apply Global Dark Theme','EPIC','HIGH',ARRAY['ui', 'dark-mode'],'2d17d6c4-8649-44d4-8f3a-10ebec3232c0','Define and apply global styles for dark mode.','auth0|67e52261b7b1cd59493a3e0a','auth0|67e52261b7b1cd59493a3e0a','DONE',NOW() + INTERVAL '1 day',8,7,NULL,NULL);
+
+
+CREATE TABLE ATTACHMENTS (
+    ID UUID PRIMARY KEY,
+    TASK_ID UUID REFERENCES TASKS(ID) ON DELETE CASCADE,
+    NAME TEXT NOT NULL,
+    URL TEXT NOT NULL,
+    TYPE TEXT,
+    SIZE INTEGER,
+    UPLOADED_AT TIMESTAMP NOT NULL DEFAULT NOW(),
+    UPLOADED_BY_ID TEXT NOT NULL REFERENCES USERS(ID) ON DELETE SET NULL
+);
+
+INSERT INTO attachments (id, task_id, name, url, type, size, uploaded_at, uploaded_by_id) VALUES
+      ('8aebf54e-3d3b-4e77-9f45-d2d4e57a8712','5e6f48d2-938b-4f7c-983b-7bb170378a83','auth-rbac-diagram.png','https://example.com/files/auth-rbac-diagram.png','image/png',204800,NOW(),'auth0|67e52261b7b1cd59493a3e0a'),
+      ('96d2db32-e83c-4d64-89c2-d6c6528390b2','f6dd4a4e-83e4-4e5f-bdf1-e817f789ee8d','mobile-wireframe.pdf','https://example.com/files/mobile-wireframe.pdf','application/pdf',512000,NOW(),'auth0|67e52261b7b1cd59493a3e0a'),
+      ('db3b76c1-fd8a-4f61-9b3e-3f30d8ff8727','ea91ee89-5276-4ceb-a472-60b8c77541af','stripe-webhooks.log','https://example.com/files/stripe-webhooks.log','text/plain',10240,NOW(),'auth0|67e52261b7b1cd59493a3e0a'),
+      ('0d0bdc77-4e8e-46f0-95b7-946bcd5b8c91','1cc0c84b-aed9-4edd-b404-a0fd9b2387fe','api-metrics-report.csv','https://example.com/files/api-metrics-report.csv','text/csv',30208,NOW(),'auth0|67e52261b7b1cd59493a3e0a'),
+      ('40f6d457-02fc-47a5-901e-9462c7b9a29c','48692b7a-7fac-4ef0-bd88-f4bea5be2c9a','dark-theme-screenshots.zip','https://example.com/files/dark-theme-screenshots.zip','application/zip',1048576,NOW(),'auth0|67e52261b7b1cd59493a3e0a');
+
+CREATE TABLE COMMENTS (
+    ID UUID PRIMARY KEY,
+    TASK_ID UUID REFERENCES TASKS(ID) ON DELETE CASCADE,
+    USER_ID TEXT NOT NULL REFERENCES USERS(ID) ON DELETE SET NULL,
+    CONTENT TEXT NOT NULL,
+    CREATED_AT TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO comments (id, task_id, user_id, content, created_at) VALUES
+      ('bcd1035e-eed6-45d2-b5dc-cf5d6cfd785e','5e6f48d2-938b-4f7c-983b-7bb170378a83','auth0|67e52261b7b1cd59493a3e0a','Make sure the Auth0 rule executes before the JWT gets issued.',NOW()),
+      ('0fc08358-d573-4567-bbf1-d20f73065f35','f6dd4a4e-83e4-4e5f-bdf1-e817f789ee8d','auth0|67e52261b7b1cd59493a3e0a','Check the back gesture handling on Android before finalizing transitions.',NOW()),
+      ('cb03bfe4-e9e5-4e55-91d4-4584c2dbb59d','ea91ee89-5276-4ceb-a472-60b8c77541af','auth0|67e52261b7b1cd59493a3e0a','Stripe retries failed webhooks. We should log and notify after 3 fails.',NOW()),
+      ('a20686ae-8de1-4f99-8b4a-2034a819de6e','1cc0c84b-aed9-4edd-b404-a0fd9b2387fe','auth0|67e52261b7b1cd59493a3e0a','Check if `/v1/users` endpoint still has high latency under load.',NOW()),
+      ('3a4efc26-49c9-4fa4-b09e-3e2a432f5c9e','48692b7a-7fac-4ef0-bd88-f4bea5be2c9a','auth0|67e52261b7b1cd59493a3e0a','Nice work on the theme tokens! Let’s polish input focus states.',NOW());

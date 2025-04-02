@@ -8,17 +8,12 @@ import {
   BarChart,
   Blocks,
   ChevronsUpDown,
-  FileClock,
-  GraduationCap,
-  Layout,
   LogOut,
-  MessageSquareText,
   MessagesSquare,
   Plus,
   Settings,
   UserCircle,
   UserCog,
-  UserSearch
 } from "lucide-react";
 import {
   TbAddressBook,
@@ -315,118 +310,8 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
                         )}
                       </motion.li>
                     </Link>
-
-
-
-
-
-
-
-
-
-
                     <Separator className="w-full" />
-                    <Link
-                      href="/deals"
-                      className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5   transition hover:bg-muted hover:text-primary",
 
-                        pathname?.includes("deals") && "bg-muted text-blue-600",
-                      )}
-                    >
-                      <Layout className="h-4 w-4" />{" "}
-                      <motion.li variants={variants}>
-                        {!isCollapsed && (
-                          <p className="ml-2 text-sm font-medium">Deals</p>
-                        )}
-                      </motion.li>
-                    </Link>
-                    <Link
-                      href="/accounts"
-                      className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5   transition hover:bg-muted hover:text-primary",
-
-                        pathname?.includes("accounts") &&
-                          "bg-muted text-blue-600",
-                      )}
-                    >
-                      <UserCircle className="h-4 w-4" />{" "}
-                      <motion.li variants={variants}>
-                        {!isCollapsed && (
-                          <p className="ml-2 text-sm font-medium">Accounts</p>
-                        )}
-                      </motion.li>
-                    </Link>
-                    <Link
-                      href="/competitors"
-                      className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5   transition hover:bg-muted hover:text-primary",
-
-                        pathname?.includes("competitors") &&
-                          "bg-muted text-blue-600",
-                      )}
-                    >
-                      <UserSearch className="h-4 w-4" />
-                      <motion.li variants={variants}>
-                        {!isCollapsed && (
-                          <p className="ml-2 text-sm font-medium">
-                            Competitors
-                          </p>
-                        )}
-                      </motion.li>
-                    </Link>
-                    <Separator className="w-full" />
-                    <Link
-                      href="/library/knowledge"
-                      className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5   transition hover:bg-muted hover:text-primary",
-
-                        pathname?.includes("library") &&
-                          "bg-muted text-blue-600",
-                      )}
-                    >
-                      <GraduationCap className="h-4 w-4" />{" "}
-                      <motion.li variants={variants}>
-                        {!isCollapsed && (
-                          <p className="ml-2 text-sm font-medium">
-                            Knowledge Base
-                          </p>
-                        )}
-                      </motion.li>
-                    </Link>
-                    <Link
-                      href="/feedback"
-                      className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5   transition hover:bg-muted hover:text-primary",
-                        pathname?.includes("feedback") &&
-                          "bg-muted text-blue-600",
-                      )}
-                    >
-                      <MessageSquareText className="h-4 w-4" />{" "}
-                      <motion.li variants={variants}>
-                        {!isCollapsed && (
-                          <p className="ml-2 text-sm font-medium">Feedback</p>
-                        )}
-                      </motion.li>
-                    </Link>
-                    <Link
-                      href="/review"
-                      className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5   transition hover:bg-muted hover:text-primary",
-
-                        pathname?.includes("review") &&
-                          "bg-muted text-blue-600",
-                      )}
-                    >
-                      <FileClock className="h-4 w-4" />{" "}
-                      <motion.li variants={variants}>
-                        {!isCollapsed && (
-                          <p className="ml-2 text-sm font-medium">
-                            Document Review
-                          </p>
-                        )}
-                      </motion.li>
-                    </Link>
                   </div>
                 </ScrollArea>
               </div>

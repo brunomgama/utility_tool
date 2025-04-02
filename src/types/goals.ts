@@ -1,5 +1,3 @@
-import {TaskSchema} from "@/types/tasks";
-
 export type GoalSchema = {
     id: string
     title: string
@@ -16,5 +14,14 @@ export type GoalSchema = {
     department_id?: string | null
     created_at: Date
     updated_at: Date
-    tasks?: TaskSchema[]
+    tasks?: GoalTaskSchema[]
+}
+
+export type GoalTaskSchema = {
+    id: string
+    title: string
+    completed: boolean
+    goalId: string
+    created_at: Date
+    updated_at: Date
 }

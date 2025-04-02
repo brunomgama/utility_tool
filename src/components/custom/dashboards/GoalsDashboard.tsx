@@ -27,8 +27,7 @@ import {useEffect, useMemo, useState} from "react";
 import {DepartmentSchema} from "@/types/department";
 import {supabase} from "@/lib/supabase";
 import {TeamSchema} from "@/types/team";
-import {GoalSchema} from "@/types/goals";
-import {TaskSchema} from "@/types/tasks";
+import {GoalSchema, GoalTaskSchema} from "@/types/goals";
 import {getInitials} from "@/lib/naming_initials";
 import {UserSchema} from "@/types/user";
 
@@ -165,7 +164,7 @@ export default function GoalsDashboardPage() {
             const [{ data: departmentsData }, { data: teamsData }, { data: goalsData }, { data: usersData }] = await Promise.all([
                 supabase.from("departments").select("*"),
                 supabase.from("teams").select("*"),
-                supabase.from("goals").select("*, tasks:tasks(*)"),
+                supabase.from("goals").select("*, tasks:goal_tasks(*)"),
                 supabase.from("users").select("*"),
             ])
 
@@ -226,18 +225,20 @@ export default function GoalsDashboardPage() {
 
     useEffect(() => {
         if (isCreateDialogOpen) {
-            form.reset({
-                title: "",
-                description: "",
-                period_evaluation: "quarterly",
-                level: "individual",
-                priority: "medium",
-                start_date: new Date(),
-                end_date: new Date(new Date().setMonth(new Date().getMonth() + 3)),
-                owner_id: users[0].id,
-            })
+            if (isCreateDialogOpen && users.length > 0) {
+                form.reset({
+                    title: "",
+                    description: "",
+                    period_evaluation: "quarterly",
+                    level: "individual",
+                    priority: "medium",
+                    start_date: new Date(),
+                    end_date: new Date(new Date().setMonth(new Date().getMonth() + 3)),
+                    owner_id: users[0].id,
+                })
+            }
         }
-    }, [isCreateDialogOpen, form])
+    }, [isCreateDialogOpen, form, users])
 
     useEffect(() => {
         if (isEditDialogOpen && selectedGoal) {
@@ -343,7 +344,7 @@ export default function GoalsDashboardPage() {
 
             return isPeriodMatch && isLevelMatch && isStatusMatch && isOwnerMatch && isSearchMatch
         })
-    }, [goals, currentPeriod, currentDate, filterLevel, filterStatus, filterOwner, searchQuery])
+    }, [goals, currentPeriod, currentDate, filterLevel, filterStatus, filterOwner, searchQuery, getPeriodDateRange])
 
     const onSubmit = (data: z.infer<typeof goalFormSchema>) => {
         setIsSaving(true)
@@ -457,7 +458,7 @@ export default function GoalsDashboardPage() {
     const handleAddTask = () => {
         if (!selectedGoal || !newTaskTitle.trim()) return
 
-        const newTask: TaskSchema = {
+        const newTask: GoalTaskSchema = {
             id: `task-${Date.now()}`,
             title: newTaskTitle,
             completed: false,
