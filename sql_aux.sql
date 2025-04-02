@@ -39,31 +39,32 @@ CREATE TABLE projects (
     completed_days text NOT NULL,
     budget numeric NOT NULL,
     period_start date NOT NULL,
-    period_end date NOT NULL
+    period_end date NOT NULL,
+    technologies TEXT[]
 );
 
 INSERT INTO projects (
     id, project_lead, angebotsnummer, client, frame_contract, purchase_order,
     project_name, link_to_project_folder, target_margin, revenue, man_days,
-    status, name, description, completed_days, budget, period_start, period_end
+    status, name, description, completed_days, budget, period_start, period_end, technologies
 ) VALUES
       (
           'PRJ-001', '03a582be-a581-452d-a9b7-ef8a3da08f1e', 'AN-001', 'Acme Corp', 'FC-101', 'PO-5001',
           'Website Redesign', 'https://example.com/folder/prj001', 0.25, 50000, 120,
           'Active', 'Website Redesign for Acme', 'Redesign Acme’s main site with a modern look.', 20, 60000,
-          '2024-01-01', '2024-06-30'
+          '2024-01-01', '2024-06-30', ARRAY['Terraform', 'Java']
       ),
       (
           'PRJ-002', '3057e79e-eb68-4d1c-986e-269b7e84549a', 'AN-002', 'Beta Inc', 'FC-102', 'PO-5002',
           'Mobile App Development', 'https://example.com/folder/prj002', 0.30, 75000, 150,
           'Active', 'Beta Mobile App', 'Develop a new cross-platform app.', 40, 85000,
-          '2024-02-01', '2024-08-01'
+          '2024-02-01', '2024-08-01', ARRAY['AWS', 'React']
       ),
       (
           'PRJ-003', '5a0b7412-e768-4fde-9b8a-3bfecbb19895', 'AN-003', 'Gamma Ltd', 'FC-103', 'PO-5003',
           'Cloud Migration', 'https://example.com/folder/prj003', 0.20, 65000, 100,
           'Completed', 'Gamma Cloud Migration', 'Move infrastructure to the cloud.', 100, 70000,
-          '2023-09-01', '2024-01-31'
+          '2023-09-01', '2024-01-31', ARRAY['React', 'Java']
       );
 
 
@@ -86,19 +87,6 @@ INSERT INTO allocations (project_id, user_id, start_date, end_date, percentage, 
     ('PRJ-003', '7ec46305-ace1-4730-be14-58983d077e85', '2023-09-01', '2024-01-15', 1, 'Cloud Engineer'),
     ('PRJ-003', '79abeeb2-c440-460b-a8a8-76c96c4f017b', '2023-10-01', '2024-01-31', 0.6, 'DevOps Specialist');
 
-
-CREATE TABLE project_technologies (
-    project_id text NOT NULL REFERENCES projects(id) ON DELETE SET NULL,
-    technology text NOT NULL
-);
-
-INSERT INTO project_technologies (project_id, technology) VALUES
-    ('PRJ-001', 'React'),
-    ('PRJ-001', 'Figma'),
-    ('PRJ-002', 'Flutter'),
-    ('PRJ-002', 'Firebase'),
-    ('PRJ-003', 'AWS'),
-    ('PRJ-003', 'Terraform');
 
 CREATE TABLE time_tracking (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),

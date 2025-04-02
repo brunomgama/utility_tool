@@ -38,30 +38,27 @@ export default function AllocationsDashboard() {
     const [projects, setProjects] = useState<ProjectSchema[]>([])
     const [users, setUsers] = useState<UserSchema[]>([])
     const [allocations, setAllocations] = useState<AllocationSchema[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-    const [selectedProject, setSelectedProject] = useState<any | null>(null)
+    const [selectedProject, setSelectedProject] = useState<ProjectSchema | null>(null)
     const [searchTerm, setSearchTerm] = useState("")
     const [statusFilter, setStatusFilter] = useState<string[]>([])
     const [modalOpen, setModalOpen] = useState(false)
     const { isCollapsed } = useSidebar()
+    const getInitials = (name: string) => name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase()
+    const formatDate = (date: Date) => new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric" }).format(date)
+    const formatCurrency = (amount: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(amount)
+    const getProjectProgress = (project: ProjectSchema) => Math.round((project.completed_days / project.man_days) * 100)
 
     useEffect(() => {
         const fetchData = async () => {
-            setLoading(true)
-            setError(null)
-
-            const [{ data: usersData }, { data: projectsData }, { data: allocationsData }, { data: techData }] =
+            const [{ data: usersData }, { data: projectsData }, { data: allocationsData }] =
                 await Promise.all([
                     supabase.from("users").select("*"),
                     supabase.from("projects").select("*"),
                     supabase.from("allocations").select("*"),
-                    supabase.from("project_technologies").select("*"),
                 ])
 
-            if (!usersData || !projectsData || !allocationsData || !techData) {
-                setError("Failed to fetch data from Supabase")
-                setLoading(false)
+            if (!usersData || !projectsData || !allocationsData) {
+                console.error("Failed to fetch data from Supabase")
                 return
             }
 
@@ -77,7 +74,7 @@ export default function AllocationsDashboard() {
                 period_start: new Date(p.period_start),
                 period_end: new Date(p.period_end),
                 projectManager: userMap[p.project_lead]?.name || "Unknown",
-                technologies: techData.filter((t) => t.project_id === p.id).map((t) => t.technology),
+                technologies: p.technologies ?? [],
             }))
 
             const formattedAllocations = allocationsData.map((a) => ({
@@ -90,18 +87,16 @@ export default function AllocationsDashboard() {
             setProjects(formattedProjects)
             setUsers(usersData)
             setAllocations(formattedAllocations)
-            setLoading(false)
         }
 
         fetchData()
     }, [])
 
-    const getInitials = (name: string) => name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase()
-    const formatDate = (date: Date) => new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric" }).format(date)
-    const formatCurrency = (amount: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(amount)
-    const getProjectProgress = (project: ProjectSchema) => Math.round((project.completed_days / project.man_days) * 100)
-
-    const getProjectAllocations = (projectId: string) => {
+    function getProjectAllocations(
+        projectId: string,
+        allocations: AllocationSchema[],
+        users: UserSchema[]
+    ) {
         const projectAllocations = allocations.filter((a) => a.project_id === projectId)
         return projectAllocations.map((allocation) => ({
             ...allocation,
@@ -121,10 +116,10 @@ export default function AllocationsDashboard() {
 
     const projectAllocations = useMemo(() => {
         if (!selectedProject) return []
-        return getProjectAllocations(selectedProject.id)
+        return getProjectAllocations(selectedProject.id, allocations, users)
     }, [selectedProject, allocations, users])
 
-    const handleProjectSelect = (project: any) => {
+    const handleProjectSelect = (project: ProjectSchema) => {
         setSelectedProject(project)
         setModalOpen(true)
     }
@@ -286,7 +281,7 @@ export default function AllocationsDashboard() {
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <Users className="h-3.5 w-3.5" />
-                                    <span>{getProjectAllocations(project.id).length} users</span>
+                                    <span>{getProjectAllocations(project.id, allocations, users).length} users</span>
                                 </div>
                             </CardFooter>
                         </Card>
@@ -397,10 +392,10 @@ export default function AllocationsDashboard() {
                                                     <div className="flex items-center gap-3">
                                                         <Avatar>
                                                             <AvatarFallback className="bg-primary text-primary-foreground">
-                                                                {getInitials(selectedProject.projectManager || "")}
+                                                                {getInitials(selectedProject.project_lead || "")}
                                                             </AvatarFallback>
                                                         </Avatar>
-                                                        <div className="font-medium">{selectedProject.projectManager}</div>
+                                                        <div className="font-medium">{selectedProject.project_lead}</div>
                                                     </div>
                                                 </CardContent>
                                             </Card>
@@ -584,13 +579,13 @@ export default function AllocationsDashboard() {
                                             </CardHeader>
                                             <CardContent>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {selectedProject.technologies?.length > 0 ? (
-                                                        selectedProject.technologies.map((tech: string, index: number) => (
-                                                            <Badge key={index} variant="outline" className="bg-muted/50">
-                                                                {tech}
-                                                            </Badge>
-                                                        ))
-                                                    ) : (
+                                                    {selectedProject.technologies?.length && selectedProject.technologies.map((tech, index) => (
+                                                        <Badge key={index} variant="outline" className="bg-muted/50">
+                                                            {tech}
+                                                        </Badge>
+                                                    ))}
+
+                                                    {!selectedProject.technologies?.length && (
                                                         <p className="text-sm text-muted-foreground">No technologies specified.</p>
                                                     )}
                                                 </div>

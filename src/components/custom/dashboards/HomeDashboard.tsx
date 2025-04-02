@@ -46,16 +46,15 @@ export default function DashboardPage() {
     useEffect(() => {
         const fetchData = async () => {
 
-            const [{ data: usersData }, { data: projectsData }, { data: allocationsData }, { data: techData }, { data: timeEntriesData }] =
+            const [{ data: usersData }, { data: projectsData }, { data: allocationsData }, { data: timeEntriesData }] =
                 await Promise.all([
                     supabase.from("users").select("*"),
                     supabase.from("projects").select("*"),
                     supabase.from("allocations").select("*"),
-                    supabase.from("project_technologies").select("*"),
                     supabase.from("time_tracking").select("*"),
                 ])
 
-            if (!usersData || !projectsData || !allocationsData || !techData || !timeEntriesData) {
+            if (!usersData || !projectsData || !allocationsData || !timeEntriesData) {
                 console.error("Failed to fetch data from Supabase")
                 return
             }
@@ -72,7 +71,7 @@ export default function DashboardPage() {
                 period_start: new Date(p.period_start),
                 period_end: new Date(p.period_end),
                 projectManager: userMap[p.project_lead]?.name || "Unknown",
-                technologies: techData.filter((t) => t.project_id === p.id).map((t) => t.technology),
+                technologies: p.technologies || [],
             }))
 
             const formattedAllocations = allocationsData.map((a) => ({
@@ -321,7 +320,7 @@ export default function DashboardPage() {
                                     <div className="flex justify-center">
                                         <div className="relative w-40 h-40">
                                             <svg viewBox="0 0 100 100" className="w-full h-full">
-                                                {Object.entries(projectStatusCounts).map(([status, count], index) => {
+                                                {projects.length > 0 && Object.entries(projectStatusCounts).map(([status, count], index) => {
                                                     const total = projects.length
                                                     const percentage = (count / total) * 100
                                                     const startAngle =
