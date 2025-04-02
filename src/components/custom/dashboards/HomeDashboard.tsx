@@ -85,8 +85,15 @@ export default function DashboardPage() {
     const totalUsers = users.filter((u) => u.status === "Active").length
     const totalBudget = projects.reduce((sum, p) => sum + (p.budget || 0), 0)
     const totalManDays = projects.reduce((sum, p) => sum + p.man_days, 0)
-    const completedManDays = projects.reduce((sum, p) => sum + p.completed_days, 0)
-    const completionPercentage = Math.round((completedManDays / totalManDays) * 100)
+
+    const totalPlannedHours = totalManDays * 8
+
+    const approvedTrackedHours = timeEntries
+        .filter((entry) => entry.status === "Approved")
+        .reduce((sum, entry) => sum + entry.hours, 0)
+
+    const completedManDays = approvedTrackedHours / 8
+    const completionPercentage = Math.round((approvedTrackedHours / totalPlannedHours) * 100)
 
     const approvedHours = timeEntries.filter((e) => e.status === "Approved").reduce((sum, e) => sum + e.hours, 0)
 
@@ -224,10 +231,11 @@ export default function DashboardPage() {
                                         <Progress value={completionPercentage} className="h-2" />
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-2">
-                                        {completedManDays} of {totalManDays} man days
+                                        {completedManDays.toFixed(1)} of {totalManDays} man days
                                     </p>
                                 </CardContent>
                             </Card>
+
                         </div>
 
                         {/* Time Tracking Overview */}
@@ -456,10 +464,20 @@ export default function DashboardPage() {
                                     <div className="space-y-6">
                                         {projects
                                             .filter((p) => p.status === "Active" || p.status === "Pending")
-                                            .sort((a, b) => b.completed_days / b.man_days - a.completed_days / a.man_days)
+                                            .sort((a, b) => {
+                                                const bHours = timeEntries.filter(e => e.project_id === b.id && e.status === "Approved").reduce((sum, e) => sum + e.hours, 0)
+                                                const aHours = timeEntries.filter(e => e.project_id === a.id && e.status === "Approved").reduce((sum, e) => sum + e.hours, 0)
+                                                return bHours / b.man_days - aHours / a.man_days
+                                            })
                                             .slice(0, 5)
                                             .map((project, index) => {
-                                                const progress = Math.round((project.completed_days / project.man_days) * 100)
+                                                const projectApprovedHours = timeEntries
+                                                    .filter((e) => e.project_id === project.id && e.status === "Approved")
+                                                    .reduce((sum, e) => sum + e.hours, 0)
+
+                                                const completedManDays = projectApprovedHours / 8
+                                                const progress = Math.round((projectApprovedHours / (project.man_days * 8)) * 100)
+
                                                 return (
                                                     <div key={index} className="space-y-2">
                                                         <div className="flex items-center justify-between">
@@ -467,11 +485,10 @@ export default function DashboardPage() {
                                                             <span className="text-sm">{progress}%</span>
                                                         </div>
                                                         <Progress value={progress} className="h-2" />
-                                                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                                        <div
+                                                            className="flex items-center justify-between text-xs text-muted-foreground">
                                                             <span>{project.client}</span>
-                                                            <span>
-                                                              {project.completed_days} / {project.man_days} days
-                                                            </span>
+                                                            <span>{completedManDays.toFixed(1)} / {project.man_days} dayss</span>
                                                         </div>
                                                     </div>
                                                 )

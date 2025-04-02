@@ -23,6 +23,7 @@ import {Label} from "@/components/ui/label";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {useEffect, useId, useMemo, useState} from "react";
 import {getUserInitialsById, getUserName} from "@/lib/user_name";
+import {TimeTrackingSchema} from "@/types/time_tracking";
 
 export default function AllocationsDashboard() {
     const id = useId();
@@ -37,18 +38,20 @@ export default function AllocationsDashboard() {
     const getInitials = (name: string) => name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase()
     const formatDate = (date: Date) => new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric" }).format(date)
     const formatCurrency = (amount: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(amount)
-    const getProjectProgress = (project: ProjectSchema) => Math.round((project.completed_days / project.man_days) * 100)
+
+    const [timeEntries, setTimeEntries] = useState<TimeTrackingSchema[]>([])
 
     useEffect(() => {
         const fetchData = async () => {
-            const [{ data: usersData }, { data: projectsData }, { data: allocationsData }] =
+            const [{ data: usersData }, { data: projectsData }, { data: allocationsData }, { data: timeEntriesData }] =
                 await Promise.all([
                     supabase.from("users").select("*"),
                     supabase.from("projects").select("*"),
                     supabase.from("allocations").select("*"),
+                    supabase.from("time_tracking").select("*"),
                 ])
 
-            if (!usersData || !projectsData || !allocationsData) {
+            if (!usersData || !projectsData || !allocationsData || !timeEntriesData) {
                 console.error("Failed to fetch data from Supabase")
                 return
             }
@@ -75,9 +78,16 @@ export default function AllocationsDashboard() {
                 end_date: new Date(a.end_date),
             }))
 
+            const formattedTimeEntries = timeEntriesData.map((entry) => ({
+                ...entry,
+                date: new Date(entry.date),
+                hours: Number(entry.hours),
+            }))
+
             setProjects(formattedProjects)
             setUsers(usersData)
             setAllocations(formattedAllocations)
+            setTimeEntries(formattedTimeEntries)
         }
 
         fetchData()
@@ -113,6 +123,23 @@ export default function AllocationsDashboard() {
     const handleProjectSelect = (project: ProjectSchema) => {
         setSelectedProject(project)
         setModalOpen(true)
+    }
+
+    const getProjectProgress = (project: ProjectSchema) => {
+        const projectHours = timeEntries
+            .filter((entry) => entry.project_id === project.id && entry.status === "Approved")
+            .reduce((sum, entry) => sum + entry.hours, 0)
+
+        const totalHours = project.man_days * 8
+        return totalHours > 0 ? Math.round((projectHours / totalHours) * 100) : 0
+    }
+
+    const getTrackedManDays = (project: ProjectSchema) => {
+        const hours = timeEntries
+            .filter((entry) => entry.project_id === project.id && entry.status === "Approved")
+            .reduce((sum, entry) => sum + entry.hours, 0)
+
+        return hours / 8
     }
 
     const columns: ColumnDef<(typeof projectAllocations)[0]>[] = [
@@ -155,7 +182,7 @@ export default function AllocationsDashboard() {
                 const percentage = row.original.percentage * 100
                 return (
                     <div className="flex items-center gap-2">
-                        <Progress value={percentage} className="h-2 w-20" />
+                        <Progress value={percentage} className="h-2 w-20"/>
                         <span>{percentage}%</span>
                     </div>
                 )
@@ -357,7 +384,7 @@ export default function AllocationsDashboard() {
                                                 <CardContent>
                                                     <div className="flex items-center justify-between">
                                                         <div className="text-2xl font-bold">
-                                                            {selectedProject.completed_days} / {selectedProject.man_days}
+                                                            {getTrackedManDays(selectedProject).toFixed(1)} / {selectedProject.man_days}
                                                         </div>
                                                         <Calendar className="h-8 w-8 text-muted-foreground" />
                                                     </div>
@@ -549,7 +576,7 @@ export default function AllocationsDashboard() {
                                                         <div className="text-sm font-medium">{selectedProject.man_days}</div>
 
                                                         <div className="text-sm text-muted-foreground">Completed</div>
-                                                        <div className="text-sm font-medium">{selectedProject.completed_days}</div>
+                                                        <div className="text-sm font-medium">{getTrackedManDays(selectedProject).toFixed(1)}</div>
 
                                                         <div className="text-sm text-muted-foreground">Progress</div>
                                                         <div className="text-sm font-medium">{getProjectProgress(selectedProject)}%</div>
