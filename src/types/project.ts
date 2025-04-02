@@ -26,3 +26,10 @@ export type ProjectResumedSchema = {
     client: string
     status: "Active" | "Inactive" | "Pending" | "Finished"
 }
+
+export const ProjectStatusColors: Record<string, string> = {
+    Active: "#22C55E",
+    Pending: "#EAB308",
+    Finished: "#3B82F6",
+    Inactive: "#6B7280",
+}

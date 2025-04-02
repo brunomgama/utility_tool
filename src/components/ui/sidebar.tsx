@@ -128,17 +128,17 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
                     <DropdownMenuItem asChild className="flex items-center gap-2">
-                      <Link href="/settings/members">
+                      <Link href="/error">
                         <UserCog className="h-4 w-4"/> Manage members
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className="flex items-center gap-2">
-                      <Link href="/settings/integrations">
+                      <Link href="/error">
                         <Blocks className="h-4 w-4"/> Integrations
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/select-org" className="flex items-center gap-2">
+                      <Link href="/error" className="flex items-center gap-2">
                         <Plus className="h-4 w-4"/>
                         Create or join an organization
                       </Link>
@@ -186,7 +186,7 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
                       </motion.li>
                     </Link>
                     <Link
-                        href="/chat"
+                        href="/error"
                         className={cn(
                             "flex h-8 flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
                             pathname?.includes("chat") && "bg-muted text-blue-600",
@@ -317,7 +317,7 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
               </div>
               <div className="flex flex-col p-2">
                 <Link
-                  href="/settings/integrations"
+                  href="/error"
                   className="mt-auto flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5   transition hover:bg-muted hover:text-primary"
                 >
                   <Settings className="h-4 w-4 shrink-0" />{" "}
@@ -372,7 +372,7 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
                           asChild
                           className="flex items-center gap-2"
                       >
-                        <Link href="/profile">
+                        <Link href="/error">
                           <UserCircle className="h-4 w-4"/> Profile
                         </Link>
                       </DropdownMenuItem>

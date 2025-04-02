@@ -23,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import {useEffect, useMemo, useState} from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import {DepartmentSchema} from "@/types/department";
 import {supabase} from "@/lib/supabase";
 import {TeamSchema} from "@/types/team";
@@ -296,7 +296,7 @@ export default function GoalsDashboardPage() {
         }
     }
 
-    const getPeriodDateRange = () => {
+    const getPeriodDateRange = useCallback(() => {
         if (currentPeriod === "monthly") {
             return {
                 start: startOfMonth(currentDate),
@@ -313,7 +313,7 @@ export default function GoalsDashboardPage() {
                 end: endOfYear(currentDate),
             }
         }
-    }
+    }, [currentPeriod, currentDate])
 
     const filteredGoals = useMemo(() => {
         const { start, end } = getPeriodDateRange()

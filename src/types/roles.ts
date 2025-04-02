@@ -7,10 +7,22 @@ export const platform_roles = [
 ]
 
 export const project_roles = [
-    "Developer",
-    "Manager",
-    "Area Lead",
-    "Tech Lead",
-    "Advisor",
-    "Scrum Master",
+    "C2 Development Management",
+    "C3 Development (Complex)",
+    "Enterprise Architect",
+    "A1 Multi Project Management",
+    "A1 Lead Integration Architect",
+    "A2 Integration Architect",
+    "Team Lead",
+    "Software Developer",
+    "Senior Engineer",
+    "Senior Software Engineer",
+    "Project collaboration",
+    "Workshops",
+    "Project Manager",
+    "Requirements Engineer",
+    "Bredex Sub",
+    "Expert IT Security",
+    "QM Beratung",
+
 ]

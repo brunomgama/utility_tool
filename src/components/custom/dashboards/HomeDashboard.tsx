@@ -10,31 +10,16 @@ import { cn } from "@/lib/utils"
 import {useEffect, useState} from "react";
 import {UserSchema} from "@/types/user";
 import {supabase} from "@/lib/supabase";
-import {ProjectSchema} from "@/types/project";
+import {ProjectSchema, ProjectStatusColors} from "@/types/project";
 import {AllocationSchema} from "@/types/allocation";
 import {TimeTrackingSchema} from "@/types/time_tracking";
 import {useSidebar} from "@/context/sidebar-context";
+import * as React from "react";
+import {departmentColors} from "@/types/department";
+import {getUserInitialsByName} from "@/lib/user_name";
+import {formatCurrency} from "@/lib/currency_formater";
+import {formatDate} from "@/lib/date_formater";
 
-const getInitials = (name: string) => {
-    return name
-        .split(" ")
-        .slice(0, 2)
-        .map((part) => part.charAt(0))
-        .join("")
-        .toUpperCase()
-}
-
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "EUR",
-        maximumFractionDigits: 0,
-    }).format(amount)
-}
-
-const formatDate = (date: Date) => {
-    return format(date, "MMM d, yyyy")
-}
 
 export default function DashboardPage() {
     const [users, setUsers] = useState<UserSchema[]>([])
@@ -116,13 +101,6 @@ export default function DashboardPage() {
         Inactive: projects.filter((p) => p.status === "Inactive").length,
     }
 
-    const statusColors = {
-        Active: "bg-green-500",
-        Pending: "bg-yellow-500",
-        Finished: "bg-blue-500",
-        Inactive: "bg-gray-500",
-    }
-
     const timeEntriesByProject = projects
         .map((project) => {
             const projectEntries = timeEntries.filter((e) => e.project_id === project.id)
@@ -132,9 +110,8 @@ export default function DashboardPage() {
                 name: project.project_name,
                 hours: Math.round(totalHours * 10) / 10,
             }
-        })
-        .sort((a, b) => b.hours - a.hours)
-        .slice(0, 5)
+        }).
+        sort((a, b) => b.hours - a.hours).slice(0, 5)
 
     const maxProjectHours = Math.max(...timeEntriesByProject.map((p) => p.hours))
 
@@ -179,16 +156,6 @@ export default function DashboardPage() {
         },
         {} as Record<string, number>,
     )
-
-    const departmentColors = {
-        Engineering: "bg-blue-500",
-        "Project Management": "bg-green-500",
-        Design: "bg-purple-500",
-        Business: "bg-yellow-500",
-        Operations: "bg-red-500",
-        "Quality Assurance": "bg-indigo-500",
-        Unassigned: "bg-gray-500",
-    }
 
     return (
         <div className={`transition-all duration-300 ${isCollapsed ? 'ml-[1rem]' : 'ml-[10rem]'} p-6`}>
@@ -302,38 +269,51 @@ export default function DashboardPage() {
                                     <CardDescription>Distribution by status</CardDescription>
                                 </CardHeader>
                                 <CardContent>
+
                                     <div className="flex justify-center">
                                         <div className="relative w-40 h-40">
                                             <svg viewBox="0 0 100 100" className="w-full h-full">
-                                                {projects.length > 0 && Object.entries(projectStatusCounts).map(([status, count], index) => {
-                                                    const total = projects.length
-                                                    const percentage = (count / total) * 100
-                                                    const startAngle =
-                                                        index === 0
-                                                            ? 0
-                                                            : Object.entries(projectStatusCounts)
-                                                                .slice(0, index)
-                                                                .reduce((sum, [, c]) => sum + (c / total) * 360, 0)
-                                                    const endAngle = startAngle + (percentage / 100) * 360
+                                                {(() => {
+                                                    const statusEntries = Object.entries(projectStatusCounts).filter(([, count]) => count > 0)
+                                                    const total = statusEntries.reduce((sum, [, c]) => sum + c, 0)
 
-                                                    // Calculate SVG arc path
-                                                    const x1 = 50 + 40 * Math.cos((startAngle - 90) * (Math.PI / 180))
-                                                    const y1 = 50 + 40 * Math.sin((startAngle - 90) * (Math.PI / 180))
-                                                    const x2 = 50 + 40 * Math.cos((endAngle - 90) * (Math.PI / 180))
-                                                    const y2 = 50 + 40 * Math.sin((endAngle - 90) * (Math.PI / 180))
+                                                    if (total === 0) {
+                                                        return <circle cx="50" cy="50" r="40" fill="#E5E7EB"/>
+                                                    }
 
-                                                    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1"
+                                                    if (statusEntries.length === 1) {
+                                                        const [onlyStatus] = statusEntries[0]
+                                                        return <circle cx="50" cy="50" r="40"
+                                                                       fill={ProjectStatusColors[onlyStatus] || "#6B7280"}/>
+                                                    }
 
-                                                    return (
-                                                        <path
-                                                            key={status}
-                                                            d={`M 50 50 L ${x1} ${y1} A 40 40 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
-                                                            className={statusColors[status as keyof typeof statusColors] || "bg-gray-500"}
-                                                            fill="currentColor"
-                                                        />
-                                                    )
-                                                })}
-                                                <circle cx="50" cy="50" r="25" fill="white" />
+                                                    return statusEntries.map(([status, count], index) => {
+                                                        const percentage = (count / total) * 100
+                                                        const startAngle =
+                                                            index === 0
+                                                                ? 0
+                                                                : statusEntries
+                                                                    .slice(0, index)
+                                                                    .reduce((sum, [, c]) => sum + (c / total) * 360, 0)
+                                                        const endAngle = startAngle + (percentage / 100) * 360
+
+                                                        const x1 = 50 + 40 * Math.cos((startAngle - 90) * (Math.PI / 180))
+                                                        const y1 = 50 + 40 * Math.sin((startAngle - 90) * (Math.PI / 180))
+                                                        const x2 = 50 + 40 * Math.cos((endAngle - 90) * (Math.PI / 180))
+                                                        const y2 = 50 + 40 * Math.sin((endAngle - 90) * (Math.PI / 180))
+
+                                                        const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1"
+
+                                                        return (
+                                                            <path
+                                                                key={status}
+                                                                d={`M 50 50 L ${x1} ${y1} A 40 40 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
+                                                                fill={ProjectStatusColors[status] || "#6B7280"}
+                                                            />
+                                                        )
+                                                    })
+                                                })()}
+                                                <circle cx="50" cy="50" r="25" fill="white"/>
                                             </svg>
                                         </div>
                                     </div>
@@ -343,7 +323,8 @@ export default function DashboardPage() {
                                             <div key={status} className="flex items-center justify-between">
                                                 <div className="flex items-center">
                                                     <div
-                                                        className={`w-3 h-3 rounded-full mr-2 ${statusColors[status as keyof typeof statusColors] || "bg-gray-500"}`}
+                                                        className="w-3 h-3 rounded-full mr-2"
+                                                        style={{backgroundColor: ProjectStatusColors[status] || "#6B7280"}}
                                                     />
                                                     <span className="text-sm">{status}</span>
                                                 </div>
@@ -378,23 +359,37 @@ export default function DashboardPage() {
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
-                                                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                                <CheckCircle2 className="h-4 w-4 text-green-500"/>
                                                 <span className="text-sm font-medium">Approved Hours</span>
                                             </div>
                                             <span className="font-bold">{approvedHours.toFixed(1)}</span>
                                         </div>
-                                        <Progress value={(approvedHours / (approvedHours + pendingHours)) * 100} className="h-2" />
+                                        <Progress
+                                            value={(approvedHours / (approvedHours + pendingHours)) * 100}
+                                            className={cn("h-2", {
+                                                " [&>div]:bg-red-500": (approvedHours / (approvedHours + pendingHours)) * 100 <= 33,
+                                                " [&>div]:bg-yellow-500": (approvedHours / (approvedHours + pendingHours)) * 100 > 33 && (approvedHours / (approvedHours + pendingHours)) * 100 <= 66,
+                                                " [&>div]:bg-green-500": (approvedHours / (approvedHours + pendingHours)) * 100 > 66,
+                                            })}
+                                        />
                                     </div>
 
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
-                                                <Clock className="h-4 w-4 text-yellow-500" />
+                                                <Clock className="h-4 w-4 text-yellow-500"/>
                                                 <span className="text-sm font-medium">Pending Hours</span>
                                             </div>
                                             <span className="font-bold">{pendingHours.toFixed(1)}</span>
                                         </div>
-                                        <Progress value={(pendingHours / (approvedHours + pendingHours)) * 100} className="h-2" />
+                                        <Progress
+                                            value={(pendingHours / (approvedHours + pendingHours)) * 100}
+                                            className={cn("h-2", {
+                                                " [&>div]:bg-red-500": (pendingHours / (approvedHours + pendingHours)) * 100 <= 33,
+                                                " [&>div]:bg-yellow-500": (pendingHours / (approvedHours + pendingHours)) * 100 > 33 && (pendingHours / (approvedHours + pendingHours)) * 100 <= 66,
+                                                " [&>div]:bg-green-500": (pendingHours / (approvedHours + pendingHours)) * 100 > 66,
+                                            })}
+                                        />
                                     </div>
 
                                     <div className="pt-4 border-t">
@@ -403,10 +398,18 @@ export default function DashboardPage() {
                                             {timeEntriesByProject.map((project, index) => (
                                                 <div key={index} className="space-y-1">
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-sm truncate max-w-[200px]">{project.name}</span>
+                                                        <span
+                                                            className="text-sm truncate max-w-[200px]">{project.name}</span>
                                                         <span className="text-sm font-medium">{project.hours}h</span>
                                                     </div>
-                                                    <Progress value={(project.hours / maxProjectHours) * 100} className="h-1.5" />
+                                                    <Progress
+                                                        value={(project.hours / maxProjectHours) * 100}
+                                                        className={cn("h-2", {
+                                                            " [&>div]:bg-red-500": (project.hours / maxProjectHours) * 100 <= 33,
+                                                            " [&>div]:bg-yellow-500": (project.hours / maxProjectHours) * 100 > 33 && (project.hours / maxProjectHours) * 100 <= 66,
+                                                            " [&>div]:bg-green-500": (project.hours / maxProjectHours) * 100 > 66,
+                                                        })}
+                                                    />
                                                 </div>
                                             ))}
                                         </div>
@@ -550,17 +553,14 @@ export default function DashboardPage() {
                                                     <span className="text-sm font-medium">{user.name}</span>
                                                     <span className="text-sm">{user.allocation.toFixed(0)}%</span>
                                                 </div>
-                                                {/*<Progress*/}
-                                                {/*    value={user.allocation}*/}
-                                                {/*    className="h-2"*/}
-                                                {/*    indicatorClassName={cn(*/}
-                                                {/*        user.allocation > 100*/}
-                                                {/*            ? "bg-red-500"*/}
-                                                {/*            : user.allocation > 80*/}
-                                                {/*                ? "bg-yellow-500"*/}
-                                                {/*                : "bg-green-500",*/}
-                                                {/*    )}*/}
-                                                {/*/>*/}
+                                                <Progress
+                                                    value={user.allocation}
+                                                    className={cn("h-2", {
+                                                        " [&>div]:bg-red-500": user.allocation <= 33,
+                                                        " [&>div]:bg-yellow-500": user.allocation > 33 && user.allocation <= 66,
+                                                        " [&>div]:bg-green-500": user.allocation > 66,
+                                                    })}
+                                                />
                                             </div>
                                         ))}
                                     </div>
@@ -574,6 +574,7 @@ export default function DashboardPage() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="grid grid-cols-2 gap-4">
+                                        {/* Donut Chart */}
                                         <div className="relative w-full aspect-square">
                                             <svg viewBox="0 0 100 100" className="w-full h-full">
                                                 {Object.entries(departmentCounts).map(([dept, count], index) => {
@@ -587,33 +588,33 @@ export default function DashboardPage() {
                                                                 .reduce((sum, [, c]) => sum + (c / total) * 360, 0)
                                                     const endAngle = startAngle + (percentage / 100) * 360
 
-                                                    // Calculate SVG arc path
                                                     const x1 = 50 + 40 * Math.cos((startAngle - 90) * (Math.PI / 180))
                                                     const y1 = 50 + 40 * Math.sin((startAngle - 90) * (Math.PI / 180))
                                                     const x2 = 50 + 40 * Math.cos((endAngle - 90) * (Math.PI / 180))
                                                     const y2 = 50 + 40 * Math.sin((endAngle - 90) * (Math.PI / 180))
-
                                                     const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1"
 
                                                     return (
                                                         <path
                                                             key={dept}
                                                             d={`M 50 50 L ${x1} ${y1} A 40 40 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
-                                                            className={departmentColors[dept as keyof typeof departmentColors] || "bg-gray-500"}
-                                                            fill="currentColor"
+                                                            fill={departmentColors[dept] || "#6B7280"} // fallback gray
                                                         />
                                                     )
                                                 })}
+                                                {/* Inner white circle for donut effect */}
                                                 <circle cx="50" cy="50" r="25" fill="white" />
                                             </svg>
                                         </div>
 
+                                        {/* Legend */}
                                         <div className="space-y-2">
                                             {Object.entries(departmentCounts).map(([dept, count]) => (
                                                 <div key={dept} className="flex items-center justify-between">
                                                     <div className="flex items-center">
                                                         <div
-                                                            className={`w-3 h-3 rounded-full mr-2 ${departmentColors[dept as keyof typeof departmentColors] || "bg-gray-500"}`}
+                                                            className="w-3 h-3 rounded-full mr-2"
+                                                            style={{ backgroundColor: departmentColors[dept] || "#6B7280" }}
                                                         />
                                                         <span className="text-xs">{dept}</span>
                                                     </div>
@@ -648,7 +649,7 @@ export default function DashboardPage() {
                                                     <div className="flex items-center gap-3">
                                                         <Avatar>
                                                             <AvatarFallback className="bg-primary text-primary-foreground">
-                                                                {getInitials(user.name)}
+                                                                {getUserInitialsByName(user.name)}
                                                             </AvatarFallback>
                                                         </Avatar>
                                                         <div>
