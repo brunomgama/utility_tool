@@ -29,82 +29,14 @@ import {supabase} from "@/lib/supabase";
 import {TeamSchema} from "@/types/team";
 import {GoalSchema} from "@/types/goals";
 import {TaskSchema} from "@/types/tasks";
+import {getInitials} from "@/lib/initial";
+import {UserSchema} from "@/types/user";
 
-// Types
 type GoalPeriod = "monthly" | "quarterly" | "yearly"
 type GoalLevel = "individual" | "team" | "department"
 type GoalStatus = "not_started" | "in_progress" | "completed" | "cancelled"
 type GoalPriority = "low" | "medium" | "high" | "critical"
 
-interface User {
-    id: string
-    name: string
-    email: string
-    role: string
-    department: string
-    team: string
-}
-
-const users: User[] = [
-    {
-        id: "user-1",
-        name: "Anna Schmidt",
-        email: "anna.schmidt@example.com",
-        role: "Developer",
-        department: "Engineering",
-        team: "Frontend",
-    },
-    {
-        id: "user-2",
-        name: "Thomas Müller",
-        email: "thomas.mueller@example.com",
-        role: "Project Manager",
-        department: "Engineering",
-        team: "Backend",
-    },
-    {
-        id: "user-3",
-        name: "Maria Garcia",
-        email: "maria.garcia@example.com",
-        role: "Designer",
-        department: "Marketing",
-        team: "Digital Marketing",
-    },
-    {
-        id: "user-4",
-        name: "Jean Dupont",
-        email: "jean.dupont@example.com",
-        role: "Business Analyst",
-        department: "Sales",
-        team: "Enterprise Sales",
-    },
-    {
-        id: "user-5",
-        name: "Paolo Rossi",
-        email: "paolo.rossi@example.com",
-        role: "DevOps Engineer",
-        department: "Engineering",
-        team: "DevOps",
-    },
-    {
-        id: "user-6",
-        name: "Emma Johnson",
-        email: "emma.johnson@example.com",
-        role: "HR Manager",
-        department: "Human Resources",
-        team: "Recruitment",
-    },
-    {
-        id: "user-7",
-        name: "Lars Andersen",
-        email: "lars.andersen@example.com",
-        role: "Frontend Developer",
-        department: "Engineering",
-        team: "Frontend",
-    },
-]
-
-// Form schema for creating/editing goals
 const goalFormSchema = z.object({
     title: z.string().min(5, { message: "Title must be at least 5 characters." }),
     description: z.string().min(10, { message: "Description must be at least 10 characters." }),
@@ -117,20 +49,6 @@ const goalFormSchema = z.object({
     team_id: z.string().optional(),
     department_id: z.string().optional(),
 })
-
-// Helper functions
-const getInitials = (name: string) => {
-    return name
-        .split(" ")
-        .slice(0, 2)
-        .map((part) => part.charAt(0))
-        .join("")
-        .toUpperCase()
-}
-
-const getUserById = (userId: string) => {
-    return users.find((user) => user.id === userId)
-}
 
 const getStatusColor = (status: GoalStatus) => {
     switch (status) {
@@ -218,12 +136,12 @@ const getPriorityLabel = (priority: GoalPriority) => {
     }
 }
 
-// Main component
 export default function GoalsDashboardPage() {
 
     const [departments, setDepartments] = useState<DepartmentSchema[]>([])
     const [teams, setTeams] = useState<TeamSchema[]>([])
     const [goals, setGoals] = useState<GoalSchema[]>([])
+    const [users, setUsers] = useState<UserSchema[]>([])
 
     const [selectedGoal, setSelectedGoal] = useState<GoalSchema | null>(null)
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -242,21 +160,24 @@ export default function GoalsDashboardPage() {
 
     useEffect(() => {
         const fetchData = async () => {
-            const [{ data: departmentsData }, { data: teamsData }, { data: goalsData }] =
-                await Promise.all([
-                    supabase.from("departments").select("*"),
-                    supabase.from("teams").select("*"),
-                    supabase.from("goals").select(`*, tasks:tasks(*)`),
-                ])
+            const [{ data: departmentsData }, { data: teamsData }, { data: goalsData }, { data: usersData }] = await Promise.all([
+                supabase.from("departments").select("*"),
+                supabase.from("teams").select("*"),
+                supabase.from("goals").select("*, tasks:tasks(*)"),
+                supabase.from("users").select("*"),
+            ])
 
-            if (!departmentsData || !teamsData || !goalsData ) {
+            if (!departmentsData || !teamsData || !goalsData || !usersData) {
                 console.error("Failed to fetch data from Supabase")
                 return
-            } else {
-                setDepartments(departmentsData)
-                setTeams(teamsData)
-                setGoals(goalsData)
             }
+
+            const updatedGoals = updateGoalProgressAndStatus(goalsData)
+
+            setDepartments(departmentsData)
+            setTeams(teamsData)
+            setGoals(updatedGoals)
+            setUsers(usersData)
         }
 
         fetchData()
@@ -270,18 +191,35 @@ export default function GoalsDashboardPage() {
         return teams.find((team) => team.id === team_id)
     }
 
+    const getUserById = (userId: string) => {
+        return users.find((user) => user.id === userId)
+    }
+
+    const updateGoalProgressAndStatus = (goalsFromDb: GoalSchema[]) => {
+        return goalsFromDb.map((goal) => {
+            const total = goal.tasks?.length ?? 0
+            const completed = goal.tasks?.filter((t) => t.completed).length ?? 0
+            const progress = total > 0 ? Math.round((completed / total) * 100) : 0
+
+            let status: GoalStatus = goal.status
+            if (progress === 100) {
+                status = "completed"
+            } else if (progress > 0) {
+                status = "in_progress"
+            } else {
+                status = "not_started"
+            }
+
+            return {
+                ...goal,
+                progress,
+                status,
+            }
+        })
+    }
+
     const form = useForm<z.infer<typeof goalFormSchema>>({
         resolver: zodResolver(goalFormSchema),
-        defaultValues: {
-            title: "",
-            description: "",
-            period_evaluation: "quarterly",
-            level: "individual",
-            priority: "medium",
-            start_date: new Date(),
-            end_date: new Date(new Date().setMonth(new Date().getMonth() + 3)),
-            owner_id: users[0].id,
-        },
     })
 
     useEffect(() => {
@@ -330,7 +268,6 @@ export default function GoalsDashboardPage() {
         }
     }
 
-    // Navigate to next period
     const navigateToNextPeriod = () => {
         if (currentPeriod === "monthly") {
             setCurrentDate(addMonths(currentDate, 1))
@@ -341,12 +278,10 @@ export default function GoalsDashboardPage() {
         }
     }
 
-    // Navigate to current period
     const navigateToCurrentPeriod = () => {
         setCurrentDate(new Date())
     }
 
-    // Get period label
     const getPeriodRangeLabel = () => {
         if (currentPeriod === "monthly") {
             return format(currentDate, "MMMM yyyy")
@@ -358,7 +293,6 @@ export default function GoalsDashboardPage() {
         }
     }
 
-    // Get period date range
     const getPeriodDateRange = () => {
         if (currentPeriod === "monthly") {
             return {
@@ -378,7 +312,6 @@ export default function GoalsDashboardPage() {
         }
     }
 
-    // Filter goals based on current filters
     const filteredGoals = useMemo(() => {
         const { start, end } = getPeriodDateRange()
 
@@ -410,7 +343,6 @@ export default function GoalsDashboardPage() {
         })
     }, [goals, currentPeriod, currentDate, filterLevel, filterStatus, filterOwner, searchQuery])
 
-    // Handle form submission for creating a goal
     const onSubmit = (data: z.infer<typeof goalFormSchema>) => {
         setIsSaving(true)
 
@@ -453,7 +385,6 @@ export default function GoalsDashboardPage() {
         }, 1000)
     }
 
-    // Handle goal deletion
     const handleDeleteGoal = () => {
         if (!selectedGoal) return
 
@@ -470,7 +401,6 @@ export default function GoalsDashboardPage() {
         }, 1000)
     }
 
-    // Handle task completion toggle
     const handleTaskToggle = (goalId: string, taskId: string, completed: boolean) => {
         const updatedGoals = goals.map((goal) => {
             if (goal.id === goalId) {
@@ -522,7 +452,6 @@ export default function GoalsDashboardPage() {
         }
     }
 
-    // Handle adding a new task
     const handleAddTask = () => {
         if (!selectedGoal || !newTaskTitle.trim()) return
 
@@ -578,7 +507,6 @@ export default function GoalsDashboardPage() {
         setIsAddTaskDialogOpen(false)
     }
 
-    // Handle deleting a task
     const handleDeleteTask = (goalId: string, taskId: string) => {
         const updatedGoals = goals.map((goal) => {
             if (goal.id === goalId) {
@@ -617,7 +545,6 @@ export default function GoalsDashboardPage() {
         }
     }
 
-    // Handle updating goal status
     const handleUpdateGoalStatus = (goalId: string, status: GoalStatus) => {
         const updatedGoals = goals.map((goal) => {
             if (goal.id === goalId) {
@@ -698,67 +625,6 @@ export default function GoalsDashboardPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Filters */}
-                    <Card>
-                        <CardContent className="p-4">
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <div className="flex-1">
-                                    <Label htmlFor="search" className="sr-only">
-                                        Search
-                                    </Label>
-                                    <div className="relative">
-                                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            id="search"
-                                            placeholder="Search goals..."
-                                            className="pl-8"
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                    <Select value={filterLevel} onValueChange={(value) => setFilterLevel(value as GoalLevel | "all")}>
-                                        <SelectTrigger className="w-[140px]">
-                                            <SelectValue placeholder="Level" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Levels</SelectItem>
-                                            <SelectItem value="individual">Individual</SelectItem>
-                                            <SelectItem value="team">Team</SelectItem>
-                                            <SelectItem value="department">Department</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as GoalStatus | "all")}>
-                                        <SelectTrigger className="w-[140px]">
-                                            <SelectValue placeholder="Status" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Statuses</SelectItem>
-                                            <SelectItem value="not_started">Not Started</SelectItem>
-                                            <SelectItem value="in_progress">In Progress</SelectItem>
-                                            <SelectItem value="completed">Completed</SelectItem>
-                                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <Select value={filterOwner} onValueChange={(value) => setFilterOwner(value)}>
-                                        <SelectTrigger className="w-[140px]">
-                                            <SelectValue placeholder="Owner" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Owners</SelectItem>
-                                            {users.map((user) => (
-                                                <SelectItem key={user.id} value={user.id}>
-                                                    {user.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
                     {/* Goals list */}
                     <div className="space-y-4">
                         {filteredGoals.length > 0 ? (
@@ -773,10 +639,11 @@ export default function GoalsDashboardPage() {
                                             <div className="flex flex-col md:flex-row">
                                                 {/* Progress bar */}
                                                 <div
-                                                    className="w-full md:w-1 h-1 md:h-auto"
-                                                    style={{
-                                                        background: `linear-gradient(to right, var(--primary) ${goal.progress}%, transparent ${goal.progress}%)`,
-                                                    }}
+                                                    className={cn("w-full md:w-1 h-1 md:h-auto", {
+                                                        "bg-red-500": goal.progress <= 33,
+                                                        "bg-yellow-400": goal.progress > 33 && goal.progress <= 66,
+                                                        "bg-green-500": goal.progress > 66,
+                                                    })}
                                                 />
 
                                                 <div className="flex-1 p-4">
@@ -784,7 +651,8 @@ export default function GoalsDashboardPage() {
                                                         <div className="space-y-1">
                                                             <div className="flex items-center gap-2">
                                                                 <h3 className="font-medium">{goal.title}</h3>
-                                                                <Badge className={cn(getStatusColor(goal.status))}>{getStatusLabel(goal.status)}</Badge>
+                                                                <Badge
+                                                                    className={cn(getStatusColor(goal.status))}>{getStatusLabel(goal.status)}</Badge>
                                                                 <Badge className={cn(getPriorityColor(goal.priority))}>
                                                                     {getPriorityLabel(goal.priority)}
                                                                 </Badge>
@@ -810,9 +678,10 @@ export default function GoalsDashboardPage() {
                                                             </Button>
                                                             <DropdownMenu>
                                                                 <DropdownMenuTrigger asChild>
-                                                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                                    <Button variant="ghost" size="sm"
+                                                                            className="h-8 w-8 p-0">
                                                                         <span className="sr-only">Open menu</span>
-                                                                        <MoreHorizontal className="h-4 w-4" />
+                                                                        <MoreHorizontal className="h-4 w-4"/>
                                                                     </Button>
                                                                 </DropdownMenuTrigger>
                                                                 <DropdownMenuContent align="end">
@@ -829,23 +698,25 @@ export default function GoalsDashboardPage() {
                                                                             setIsEditDialogOpen(true)
                                                                         }}
                                                                     >
-                                                                        <Edit className="mr-2 h-4 w-4" />
+                                                                        <Edit className="mr-2 h-4 w-4"/>
                                                                         Edit
                                                                     </DropdownMenuItem>
-                                                                    <DropdownMenuSeparator />
+                                                                    <DropdownMenuSeparator/>
                                                                     {goal.status !== "completed" && (
-                                                                        <DropdownMenuItem onClick={() => handleUpdateGoalStatus(goal.id, "completed")}>
-                                                                            <Check className="mr-2 h-4 w-4" />
+                                                                        <DropdownMenuItem
+                                                                            onClick={() => handleUpdateGoalStatus(goal.id, "completed")}>
+                                                                            <Check className="mr-2 h-4 w-4"/>
                                                                             Mark as Completed
                                                                         </DropdownMenuItem>
                                                                     )}
                                                                     {goal.status === "completed" && (
-                                                                        <DropdownMenuItem onClick={() => handleUpdateGoalStatus(goal.id, "in_progress")}>
-                                                                            <Clock className="mr-2 h-4 w-4" />
+                                                                        <DropdownMenuItem
+                                                                            onClick={() => handleUpdateGoalStatus(goal.id, "in_progress")}>
+                                                                            <Clock className="mr-2 h-4 w-4"/>
                                                                             Mark as In Progress
                                                                         </DropdownMenuItem>
                                                                     )}
-                                                                    <DropdownMenuSeparator />
+                                                                    <DropdownMenuSeparator/>
                                                                     <DropdownMenuItem
                                                                         onClick={() => {
                                                                             setSelectedGoal({
@@ -859,7 +730,7 @@ export default function GoalsDashboardPage() {
                                                                         }}
                                                                         className="text-red-600"
                                                                     >
-                                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                                        <Trash2 className="mr-2 h-4 w-4"/>
                                                                         Delete
                                                                     </DropdownMenuItem>
                                                                 </DropdownMenuContent>
@@ -869,10 +740,12 @@ export default function GoalsDashboardPage() {
 
                                                     <div className="mt-4 flex flex-col sm:flex-row justify-between">
                                                         <div className="flex flex-wrap gap-2 mb-2 sm:mb-0">
-                                                            <Badge variant="outline">{getPeriodLabel(goal.period_evaluation)}</Badge>
+                                                            <Badge
+                                                                variant="outline">{getPeriodLabel(goal.period_evaluation)}</Badge>
                                                             <Badge variant="outline">{getLevelLabel(goal.level)}</Badge>
                                                             {team && <Badge variant="outline">Team: {team.name}</Badge>}
-                                                            {department && <Badge variant="outline">Dept: {department.name}</Badge>}
+                                                            {department && <Badge
+                                                                variant="outline">Dept: {department.name}</Badge>}
                                                         </div>
                                                         <div className="flex items-center gap-2">
                                                             <div className="text-sm text-muted-foreground">
@@ -893,20 +766,30 @@ export default function GoalsDashboardPage() {
                                                     <div className="mt-4">
                                                         <div className="flex items-center justify-between mb-1">
                                                             <span className="text-sm font-medium">Progress</span>
-                                                            <span className="text-sm font-medium">{goal.progress}%</span>
+                                                            <span
+                                                                className="text-sm font-medium">{goal.progress}%</span>
                                                         </div>
-                                                        <Progress value={goal.progress} className="h-2" />
+                                                        <Progress
+                                                            value={goal.progress}
+                                                            className={cn("h-2", {
+                                                                " [&>div]:bg-red-500": goal.progress <= 33,
+                                                                " [&>div]:bg-yellow-500": goal.progress > 33 && goal.progress <= 66,
+                                                                " [&>div]:bg-green-500": goal.progress > 66,
+                                                            })}
+                                                        />
                                                     </div>
 
                                                     {/* Tasks preview */}
                                                     {(goal.tasks?.length ?? 0) > 0 && (
                                                         <div className="mt-4">
                                                             <div className="text-sm font-medium mb-2">
-                                                                Tasks ({(goal.tasks ?? []).filter((t) => t.completed).length}/{goal.tasks?.length})
+                                                                Tasks
+                                                                ({(goal.tasks ?? []).filter((t) => t.completed).length}/{goal.tasks?.length})
                                                             </div>
                                                             <div className="space-y-1">
                                                                 {(goal.tasks ?? []).slice(0, 3).map((task) => (
-                                                                    <div key={task.id} className="flex items-center gap-2">
+                                                                    <div key={task.id}
+                                                                         className="flex items-center gap-2">
                                                                         <Checkbox
                                                                             id={`task-${task.id}`}
                                                                             checked={task.completed}
@@ -984,11 +867,16 @@ export default function GoalsDashboardPage() {
                                                 <div key={status} className="space-y-1">
                                                     <div className="flex justify-between text-sm">
                                                         <span>{getStatusLabel(status as GoalStatus)}</span>
-                                                        <span>
-                              {count} ({percentage}%)
-                            </span>
+                                                        <span>{count} ({percentage}%)</span>
                                                     </div>
-                                                    <Progress value={percentage} className="h-1.5" />
+                                                    <Progress
+                                                        value={percentage}
+                                                        className={cn("h-2", {
+                                                            " [&>div]:bg-red-500": percentage <= 33,
+                                                            " [&>div]:bg-yellow-500": percentage > 33 && percentage <= 66,
+                                                            " [&>div]:bg-green-500": percentage > 66,
+                                                        })}
+                                                    />
                                                 </div>
                                             )
                                         })}
@@ -1010,7 +898,14 @@ export default function GoalsDashboardPage() {
                               {count} ({percentage}%)
                             </span>
                                                     </div>
-                                                    <Progress value={percentage} className="h-1.5" />
+                                                    <Progress
+                                                        value={percentage}
+                                                        className={cn("h-2", {
+                                                            " [&>div]:bg-red-500": percentage <= 33,
+                                                            " [&>div]:bg-yellow-500": percentage > 33 && percentage <= 66,
+                                                            " [&>div]:bg-green-500": percentage > 66,
+                                                        })}
+                                                    />
                                                 </div>
                                             )
                                         })}
@@ -1125,7 +1020,7 @@ export default function GoalsDashboardPage() {
                                 )}
                             />
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                                 <FormField
                                     control={form.control}
                                     name="period_evaluation"
@@ -1133,7 +1028,7 @@ export default function GoalsDashboardPage() {
                                         <FormItem>
                                             <FormLabel>Period</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl>
+                                                <FormControl className={"w-full"}>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select period" />
                                                     </SelectTrigger>
@@ -1156,7 +1051,7 @@ export default function GoalsDashboardPage() {
                                         <FormItem>
                                             <FormLabel>Level</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl>
+                                                <FormControl className={"w-full"}>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select level" />
                                                     </SelectTrigger>
@@ -1255,7 +1150,7 @@ export default function GoalsDashboardPage() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                                 <FormField
                                     control={form.control}
                                     name="priority"
@@ -1263,7 +1158,7 @@ export default function GoalsDashboardPage() {
                                         <FormItem>
                                             <FormLabel>Priority</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl>
+                                                <FormControl className={"w-full"}>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select priority" />
                                                     </SelectTrigger>
@@ -1287,7 +1182,7 @@ export default function GoalsDashboardPage() {
                                         <FormItem>
                                             <FormLabel>Owner</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl>
+                                                <FormControl className={"w-full"}>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select owner" />
                                                     </SelectTrigger>
@@ -1488,7 +1383,14 @@ export default function GoalsDashboardPage() {
                                         <h4 className="text-sm font-medium">Progress</h4>
                                         <span className="text-sm font-medium">{selectedGoal.progress}%</span>
                                     </div>
-                                    <Progress value={selectedGoal.progress} className="h-2" />
+                                    <Progress
+                                        value={selectedGoal.progress}
+                                        className={cn("h-2", {
+                                            " [&>div]:bg-red-500": selectedGoal.progress <= 33,
+                                            " [&>div]:bg-yellow-500": selectedGoal.progress > 33 && selectedGoal.progress <= 66,
+                                            " [&>div]:bg-green-500": selectedGoal.progress > 66,
+                                        })}
+                                    />
                                 </div>
 
                                 <div>
