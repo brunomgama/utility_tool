@@ -28,8 +28,8 @@ import {DepartmentSchema} from "@/types/department";
 import {supabase} from "@/lib/supabase";
 import {TeamSchema} from "@/types/team";
 import {GoalSchema, GoalTaskSchema} from "@/types/goals";
-import {getInitials} from "@/lib/naming_initials";
 import {UserSchema} from "@/types/user";
+import {getUserInitialsById, getUserInitialsByName} from "@/lib/user_name";
 
 type GoalPeriod = "monthly" | "quarterly" | "yearly"
 type GoalLevel = "individual" | "team" | "department"
@@ -344,7 +344,7 @@ export default function GoalsDashboardPage() {
 
             return isPeriodMatch && isLevelMatch && isStatusMatch && isOwnerMatch && isSearchMatch
         })
-    }, [goals, currentPeriod, currentDate, filterLevel, filterStatus, filterOwner, searchQuery, getPeriodDateRange])
+    }, [goals, filterLevel, filterStatus, filterOwner, searchQuery, getPeriodDateRange])
 
     const onSubmit = (data: z.infer<typeof goalFormSchema>) => {
         setIsSaving(true)
@@ -758,7 +758,7 @@ export default function GoalsDashboardPage() {
                                                             <div className="flex items-center gap-1">
                                                                 <Avatar className="h-6 w-6">
                                                                     <AvatarFallback className="text-xs">
-                                                                        {owner ? getInitials(owner.name) : "??"}
+                                                                        {owner ? getUserInitialsByName(owner.name) : "??"}
                                                                     </AvatarFallback>
                                                                 </Avatar>
                                                                 <span className="text-sm">{owner?.name}</span>
@@ -953,7 +953,7 @@ export default function GoalsDashboardPage() {
                                     .map(({ user, count, completed }) => (
                                         <div key={user.id} className="flex items-center gap-3">
                                             <Avatar>
-                                                <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                                                <AvatarFallback>{getUserInitialsByName(user.name)}</AvatarFallback>
                                             </Avatar>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium truncate">{user.name}</p>
@@ -1358,9 +1358,7 @@ export default function GoalsDashboardPage() {
                                     <div className="flex items-center gap-2">
                                         <Avatar className="h-6 w-6">
                                             <AvatarFallback className="text-xs">
-                                                {getUserById(selectedGoal.owner_id)
-                                                    ? getInitials(getUserById(selectedGoal.owner_id)!.name)
-                                                    : "??"}
+                                                {getUserInitialsById(users, selectedGoal.owner_id)}
                                             </AvatarFallback>
                                         </Avatar>
                                         <span className="text-sm">{getUserById(selectedGoal.owner_id)?.name || "Unknown"}</span>

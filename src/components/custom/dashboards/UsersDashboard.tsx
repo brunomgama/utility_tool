@@ -19,9 +19,9 @@ import {AllocationSchema} from "@/types/allocation";
 import {supabase} from "@/lib/supabase";
 import {TbUsers} from "react-icons/tb";
 import * as React from "react";
-import {getInitials} from "@/lib/naming_initials";
 import {getCountryFlag} from "@/lib/flag";
 import {useRouter} from "next/navigation";
+import {getUserInitialsByName} from "@/lib/user_name";
 
 export default function UsersDashboard() {
     const id = useId();
@@ -64,7 +64,7 @@ export default function UsersDashboard() {
                 return (
                     <div className="flex items-center gap-3">
                         <Avatar>
-                            <AvatarFallback className="bg-primary text-primary-foreground">{getInitials(name)}</AvatarFallback>
+                            <AvatarFallback className="bg-primary text-primary-foreground">{getUserInitialsByName(name)}</AvatarFallback>
                         </Avatar>
                         <div className="font-medium">{name}</div>
                     </div>

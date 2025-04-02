@@ -20,8 +20,8 @@ import {supabase} from "@/lib/supabase";
 import {UserSchema} from "@/types/user";
 import {ProjectResumedSchema} from "@/types/project";
 import {TimeTrackingSchema} from "@/types/time_tracking";
-import {getInitials} from "@/lib/naming_initials";
 import {useSidebar} from "@/context/sidebar-context";
+import {getUserInitialsByName} from "@/lib/user_name";
 
 export default function TimeTrackingPage({ session }: { session: { user: { sub: string; email?: string; name?: string } } }) {
     const { isCollapsed } = useSidebar();
@@ -418,7 +418,7 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
                     {isAdmin && user && user.id !== currentUser?.id && (
                         <div className="flex items-center gap-2 mt-2 pt-2 border-t">
                             <Avatar className="h-5 w-5">
-                                <AvatarFallback className="text-xs">{getInitials(user.name)}</AvatarFallback>
+                                <AvatarFallback className="text-xs">{getUserInitialsByName(user.name)}</AvatarFallback>
                             </Avatar>
                             <span className="text-xs text-muted-foreground">{user.name}</span>
                         </div>

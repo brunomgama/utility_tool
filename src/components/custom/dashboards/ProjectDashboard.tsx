@@ -21,6 +21,7 @@ import {formatPercentage} from "@/lib/percentage_formater";
 import AddProjectModal from "@/components/custom/project/AddProjectModal";
 import {UserSchema} from "@/types/user";
 import {formatDate} from "@/lib/date_formater";
+import {getUserName} from "@/lib/user_name";
 
 export default function ProjectsDashboard() {
     const id = useId();
@@ -203,7 +204,7 @@ export default function ProjectsDashboard() {
                             <div className="space-y-2">
                                 <div className="grid grid-cols-2 gap-1">
                                     <span className="text-sm text-muted-foreground">Project Lead:</span>
-                                    <span className="text-sm">{getUserName(project.project_lead)}</span>
+                                    <span className="text-sm">{getUserName(users, project.project_lead)}</span>
 
                                     <span className="text-sm text-muted-foreground">Status:</span>
                                     <span className="text-sm">
@@ -263,10 +264,6 @@ export default function ProjectsDashboard() {
                 </div>
             </div>
         )
-    }
-
-    const getUserName = (userId: string) => {
-        return users.find((u) => u.id === userId)?.name || userId
     }
 
     return (

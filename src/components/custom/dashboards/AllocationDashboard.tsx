@@ -1,17 +1,7 @@
 "use client"
 
 import * as React from "react"
-import {
-    Calendar,
-    CheckCircle2,
-    ChevronFirst,
-    ChevronLast,
-    ChevronLeft,
-    ChevronRight,
-    Search,
-    User,
-    Users,
-} from "lucide-react"
+import {Calendar, CheckCircle2, ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Search, User, Users,} from "lucide-react"
 import {type ColumnDef, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable} from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,6 +22,7 @@ import {AllocationSchema} from "@/types/allocation";
 import {Label} from "@/components/ui/label";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {useEffect, useId, useMemo, useState} from "react";
+import {getUserInitialsById, getUserName} from "@/lib/user_name";
 
 export default function AllocationsDashboard() {
     const id = useId();
@@ -392,10 +383,10 @@ export default function AllocationsDashboard() {
                                                     <div className="flex items-center gap-3">
                                                         <Avatar>
                                                             <AvatarFallback className="bg-primary text-primary-foreground">
-                                                                {getInitials(selectedProject.project_lead || "")}
+                                                                {getUserInitialsById(users, selectedProject.project_lead || "")}
                                                             </AvatarFallback>
                                                         </Avatar>
-                                                        <div className="font-medium">{selectedProject.project_lead}</div>
+                                                        <div className="font-medium">{getUserName(users, selectedProject.project_lead)}</div>
                                                     </div>
                                                 </CardContent>
                                             </Card>

@@ -16,8 +16,8 @@ import {UserSchema} from "@/types/user";
 import {ProjectSchema} from "@/types/project";
 import {supabase} from "@/lib/supabase";
 import {TimeTrackingSchema} from "@/types/time_tracking";
-import {getInitials} from "@/lib/naming_initials";
 import {useSidebar} from "@/context/sidebar-context";
+import {getUserInitialsByName} from "@/lib/user_name";
 
 export default function TimeAnalyticsPage() {
     const { isCollapsed } = useSidebar();
@@ -409,7 +409,7 @@ export default function TimeAnalyticsPage() {
                                                                     <div className="flex items-center gap-2">
                                                                         <Avatar className="h-6 w-6">
                                                                             <AvatarFallback className="text-xs">
-                                                                                {getInitials(item.user?.name || "")}
+                                                                                {getUserInitialsByName(item.user?.name || "")}
                                                                             </AvatarFallback>
                                                                         </Avatar>
                                                                         <span className="font-medium">{item.user?.name ?? "Unknown User"}</span>
