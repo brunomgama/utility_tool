@@ -132,10 +132,6 @@ export default function TimeTrackingPage() {
         setCurrentMonth(addMonths(currentMonth, 1))
     }
 
-    const goToCurrentMonth = () => {
-        setCurrentMonth(startOfMonth(new Date()))
-    }
-
     const handleHourChange = (date: Date, hours: string) => {
         const dateKey = formatDateKey(date)
         const parsedHours = Number.parseFloat(hours)

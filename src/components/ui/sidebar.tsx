@@ -4,36 +4,16 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge"
-import {
-  Blocks,
-  ChevronsUpDown,
-  FileClock,
-  GraduationCap,
-  Layout,
-  LayoutDashboard,
-  LogOut,
-  MessageSquareText,
-  MessagesSquare,
-  Plus,
-  Settings,
-  UserCircle,
-  UserCog,
-  UserSearch,
-} from "lucide-react";
+import {Blocks, ChevronsUpDown, FileClock, GraduationCap, Layout, LogOut, MessageSquareText, MessagesSquare, Plus, Settings, UserCircle, UserCog, UserSearch} from "lucide-react";
 import {TbAddressBook, TbBuildingCommunity, TbCalendarTime, TbLayoutDashboard, TbUsers} from "react-icons/tb";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import {useSidebar} from "@/context/sidebar-context";
+import Image from "next/image";
 
 const sidebarVariants = {
   open: {
@@ -79,8 +59,7 @@ const staggerVariants = {
   },
 };
 
-
-export function SessionNavBar() {
+export function SessionNavBar({ user }: { user?: { name?: string; email?: string } }) {
   const { isCollapsed, setIsCollapsed } = useSidebar();
   const pathname = usePathname();
   return (
@@ -101,56 +80,50 @@ export function SessionNavBar() {
       >
         <motion.ul variants={staggerVariants} className="flex h-full flex-col">
           <div className="flex grow flex-col items-center">
-            <div className="flex h-[54px] w-full shrink-0  border-b p-2">
-              <div className=" mt-[1.5px] flex w-full">
+            <div className="flex h-[54px] w-full shrink-0 border-b p-2">
+              <div className="mt-[1.5px] flex w-full">
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger className="w-full" asChild>
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex w-fit items-center gap-2  px-2"
+                        variant="ghost"
+                        size="sm"
+                        className="flex w-fit items-center gap-2 px-2"
                     >
-                      <Avatar className='rounded size-4'>
-                        <AvatarFallback>O</AvatarFallback>
-                      </Avatar>
+                      {/* Custom Logo */}
+                      <Image
+                          src="/logo.svg"
+                          alt="Rethink logo"
+                          width={20}
+                          height={20}
+                          className="rounded"
+                      />
                       <motion.li
-                        variants={variants}
-                        className="flex w-fit items-center gap-2"
+                          variants={variants}
+                          className="flex w-fit items-center gap-2"
                       >
                         {!isCollapsed && (
-                          <>
-                            <p className="text-sm font-medium  ">
-                              {"Organization"}
-                            </p>
-                            <ChevronsUpDown className="h-4 w-4 text-muted-foreground/50" />
-                          </>
+                            <>
+                              <p className="text-sm font-semibold">Rethink</p>
+                              <ChevronsUpDown className="h-4 w-4 text-muted-foreground/50"/>
+                            </>
                         )}
                       </motion.li>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
-                    <DropdownMenuItem
-                      asChild
-                      className="flex items-center gap-2"
-                    >
+                    <DropdownMenuItem asChild className="flex items-center gap-2">
                       <Link href="/settings/members">
-                        <UserCog className="h-4 w-4" /> Manage members
+                        <UserCog className="h-4 w-4"/> Manage members
                       </Link>
-                    </DropdownMenuItem>{" "}
-                    <DropdownMenuItem
-                      asChild
-                      className="flex items-center gap-2"
-                    >
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="flex items-center gap-2">
                       <Link href="/settings/integrations">
-                        <Blocks className="h-4 w-4" /> Integrations
+                        <Blocks className="h-4 w-4"/> Integrations
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link
-                        href="/select-org"
-                        className="flex items-center gap-2"
-                      >
-                        <Plus className="h-4 w-4" />
+                      <Link href="/select-org" className="flex items-center gap-2">
+                        <Plus className="h-4 w-4"/>
                         Create or join an organization
                       </Link>
                     </DropdownMenuItem>
@@ -164,22 +137,22 @@ export function SessionNavBar() {
                 <ScrollArea className="h-16 grow p-2">
                   <div className={cn("flex w-full flex-col gap-1")}>
                     <Link
-                      href="/"
-                      className={cn(
-                        "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
-                        pathname?.includes("dashboard") &&
-                          "bg-muted text-blue-600",
-                      )}
+                        href="/"
+                        className={cn(
+                            "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                            pathname?.includes("dashboard") &&
+                            "bg-muted text-blue-600",
+                        )}
                     >
-                      <TbLayoutDashboard className="h-4 w-4" />{" "}
+                      <TbLayoutDashboard className="h-4 w-4"/>{" "}
                       <motion.li variants={variants}>
                         {!isCollapsed && (
-                          <p className="ml-2 text-sm font-medium">Dashboard</p>
+                            <p className="ml-2 text-sm font-medium">Dashboard</p>
                         )}
                       </motion.li>
                     </Link>
 
-                    <Separator className="w-full" />
+                    <Separator className="w-full"/>
 
                     <Link
                         href="/users"
@@ -189,7 +162,7 @@ export function SessionNavBar() {
                             "bg-muted text-blue-600",
                         )}
                     >
-                      <TbUsers className="h-4 w-4" />{" "}
+                      <TbUsers className="h-4 w-4"/>{" "}
                       <motion.li variants={variants}>
                         {!isCollapsed && (
                             <p className="ml-2 text-sm font-medium">Users</p>
@@ -403,7 +376,11 @@ export function SessionNavBar() {
                       <div className="flex h-8 w-full flex-row items-center gap-2 rounded-md px-2 py-1.5  transition hover:bg-muted hover:text-primary">
                         <Avatar className="size-4">
                           <AvatarFallback>
-                            A
+                            {user?.name
+                                ?.split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .toUpperCase() ?? "U"}
                           </AvatarFallback>
                         </Avatar>
                         <motion.li
@@ -423,31 +400,29 @@ export function SessionNavBar() {
                       <div className="flex flex-row items-center gap-2 p-2">
                         <Avatar className="size-6">
                           <AvatarFallback>
-                            AL
+                            {user?.name?.[0] ?? "U"}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col text-left">
-                          <span className="text-sm font-medium">
-                            {`Andrew Luo`}
-                          </span>
+                          <span className="text-sm font-medium">{user?.name ?? "User"}</span>
                           <span className="line-clamp-1 text-xs text-muted-foreground">
-                            {`andrew@usehindsight.com`}
+                            {user?.email ?? "user@example.com"}
                           </span>
                         </div>
                       </div>
-                      <DropdownMenuSeparator />
+                      <DropdownMenuSeparator/>
                       <DropdownMenuItem
-                        asChild
-                        className="flex items-center gap-2"
+                          asChild
+                          className="flex items-center gap-2"
                       >
                         <Link href="/settings/profile">
-                          <UserCircle className="h-4 w-4" /> Profile
+                          <UserCircle className="h-4 w-4"/> Profile
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="flex items-center gap-2"
-                      >
-                        <LogOut className="h-4 w-4" /> Sign out
+                      <DropdownMenuItem asChild className="flex items-center gap-2">
+                        <a href="/auth/logout">
+                          <LogOut className="h-4 w-4"/> Sign out
+                        </a>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
