@@ -20,7 +20,7 @@ import {
   UserCog,
   UserSearch,
 } from "lucide-react";
-import {TbLayoutDashboard, TbUsers} from "react-icons/tb";
+import {TbAddressBook, TbLayoutDashboard, TbUsers} from "react-icons/tb";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -193,6 +193,22 @@ export function SessionNavBar() {
                       <motion.li variants={variants}>
                         {!isCollapsed && (
                             <p className="ml-2 text-sm font-medium">Users</p>
+                        )}
+                      </motion.li>
+                    </Link>
+
+                    <Link
+                        href="/projects"
+                        className={cn(
+                            "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
+                            pathname?.includes("projects") &&
+                            "bg-muted text-blue-600",
+                        )}
+                    >
+                      <TbAddressBook className="h-4 w-4" />{" "}
+                      <motion.li variants={variants}>
+                        {!isCollapsed && (
+                            <p className="ml-2 text-sm font-medium">Projects</p>
                         )}
                       </motion.li>
                     </Link>
