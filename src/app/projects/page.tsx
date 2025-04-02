@@ -1,677 +1,398 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { ColumnDef } from "@tanstack/react-table";
-import { supabase } from "@/lib/supabase";
-import { ProjectSchema } from "@/types/project";
-import { cn } from "@/lib/utils";
-import GenericTable from "@/components/custom/GenericTable";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
-    DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Ellipsis } from "lucide-react";
-import {
-    DropdownMenu,
-    DropdownMenuTrigger,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuGroup,
-    DropdownMenuSeparator,
-    DropdownMenuSub,
-    DropdownMenuSubTrigger,
-    DropdownMenuPortal,
-    DropdownMenuSubContent,
-} from "@/components/ui/dropdown-menu";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import * as React from "react"
+import {ChevronDown, ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Clipboard, FileText, Link2, Users} from "lucide-react"
+import {type ColumnDef, type ColumnFiltersState, type SortingState, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable} from "@tanstack/react-table"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
+import {useSidebar} from "@/context/sidebar-context";
+import {Label} from "@/components/ui/label";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {useEffect, useId, useState} from "react";
+import {supabase} from "@/lib/supabase";
+import {ProjectSchema} from "@/types/project";
+import {TbAddressBook} from "react-icons/tb";
 
-// 📝 Create Project Modal
-function CreateProjectModal({ onProjectAdded }: { onProjectAdded: (project: ProjectSchema) => void }) {
-    const [open, setOpen] = useState(false);
-    // Form state – adjust as needed
-    const [projectLead, setProjectLead] = useState<number>(0);
-    const [angebotsnummer, setAngebotsnummer] = useState("");
-    const [client, setClient] = useState("");
-    const [frameContract, setFrameContract] = useState("");
-    const [purchaseOrder, setPurchaseOrder] = useState("");
-    const [projectName, setProjectName] = useState("");
-    const [linkToProjectFolder, setLinkToProjectFolder] = useState("");
-    const [targetMargin, setTargetMargin] = useState<number>(0);
-    const [revenue, setRevenue] = useState<number>(0);
-    const [manDays, setManDays] = useState<number>(0);
-    const [status, setStatus] = useState<"Active" | "Inactive" | "Pending" | "Finished">("Active");
-    const [name, setName] = useState("");
-    const [periodStart, setPeriodStart] = useState("");
-    const [periodEnd, setPeriodEnd] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-
-        // Create a payload using lower-case keys to match your DB columns
-        const payload = {
-            projectlead: projectLead,
-            angebotsnummer,
-            client,
-            framecontract: frameContract,
-            purchaseorder: purchaseOrder,
-            projectname: projectName,
-            linktoprojectfolder: linkToProjectFolder,
-            targetmargin: targetMargin,
-            revenue,
-            mandays: manDays,
-            status,
-            name,
-            periodstart: new Date(periodStart),
-            periodend: new Date(periodEnd),
-        };
-
-        const { data, error } = await supabase
-            .from("projects")
-            .insert([payload])
-            .single();
-
-        if (!error && data) {
-            // Transform the response so that the keys match your type (camelCase)
-            const transformed: ProjectSchema = {
-                id: data.id,
-                projectLead: data.projectlead,
-                angebotsnummer: data.angebotsnummer,
-                client: data.client,
-                frameContract: data.framecontract,
-                purchaseOrder: data.purchaseorder,
-                projectName: data.projectname,
-                linkToProjectFolder: data.linktoprojectfolder,
-                targetMargin: data.targetmargin,
-                revenue: data.revenue,
-                manDays: data.mandays,
-                status: data.status,
-                name: data.name,
-                periodStart: data.periodstart,
-                periodEnd: data.periodend,
-            };
-
-            onProjectAdded(transformed);
-            // Clear fields
-            setProjectLead(0);
-            setAngebotsnummer("");
-            setClient("");
-            setFrameContract("");
-            setPurchaseOrder("");
-            setProjectName("");
-            setLinkToProjectFolder("");
-            setTargetMargin(0);
-            setRevenue(0);
-            setManDays(0);
-            setStatus("Active");
-            setName("");
-            setPeriodStart("");
-            setPeriodEnd("");
-            setOpen(false);
-        } else {
-            console.error("Error creating project:", error);
-        }
-        setIsSubmitting(false);
-    };
-
-    return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline">Add Project</Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Add New Project</DialogTitle>
-                    <DialogDescription>Fill in the project details below.</DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-                    <Input
-                        type="number"
-                        value={projectLead}
-                        onChange={(e) => setProjectLead(Number(e.target.value))}
-                        placeholder="Project Lead (ID)"
-                        required
-                    />
-                    <Input
-                        value={angebotsnummer}
-                        onChange={(e) => setAngebotsnummer(e.target.value)}
-                        placeholder="Angebotsnummer"
-                        required
-                    />
-                    <Input
-                        value={client}
-                        onChange={(e) => setClient(e.target.value)}
-                        placeholder="Client"
-                        required
-                    />
-                    <Input
-                        value={frameContract}
-                        onChange={(e) => setFrameContract(e.target.value)}
-                        placeholder="Frame Contract"
-                    />
-                    <Input
-                        value={purchaseOrder}
-                        onChange={(e) => setPurchaseOrder(e.target.value)}
-                        placeholder="Purchase Order"
-                    />
-                    <Input
-                        value={projectName}
-                        onChange={(e) => setProjectName(e.target.value)}
-                        placeholder="Project Name"
-                        required
-                    />
-                    <Input
-                        value={linkToProjectFolder}
-                        onChange={(e) => setLinkToProjectFolder(e.target.value)}
-                        placeholder="Link to Project Folder"
-                    />
-                    <Input
-                        type="number"
-                        value={targetMargin}
-                        onChange={(e) => setTargetMargin(Number(e.target.value))}
-                        placeholder="Target Margin"
-                    />
-                    <Input
-                        type="number"
-                        value={revenue}
-                        onChange={(e) => setRevenue(Number(e.target.value))}
-                        placeholder="Revenue"
-                    />
-                    <Input
-                        type="number"
-                        value={manDays}
-                        onChange={(e) => setManDays(Number(e.target.value))}
-                        placeholder="Man Days"
-                    />
-                    <Select value={status} onValueChange={(val) => setStatus(val as any)}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Active">Active</SelectItem>
-                            <SelectItem value="Inactive">Inactive</SelectItem>
-                            <SelectItem value="Pending">Pending</SelectItem>
-                            <SelectItem value="Finished">Finished</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Input
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Name"
-                        required
-                    />
-                    <Input
-                        type="date"
-                        value={periodStart}
-                        onChange={(e) => setPeriodStart(e.target.value)}
-                        placeholder="Period Start"
-                        required
-                    />
-                    <Input
-                        type="date"
-                        value={periodEnd}
-                        onChange={(e) => setPeriodEnd(e.target.value)}
-                        placeholder="Period End"
-                        required
-                    />
-                    <DialogFooter>
-                        <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? "Saving..." : "Save"}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
-    );
+const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(amount)
 }
 
-// ✏️ Edit Project Modal
-function EditProjectModal({
-                              initialProject,
-                              onProjectUpdated,
-                              open,
-                              onOpenChange,
-                          }: {
-    initialProject: ProjectSchema;
-    onProjectUpdated: (project: ProjectSchema) => void;
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-}) {
-    const [projectLead, setProjectLead] = useState(initialProject.projectLead);
-    const [angebotsnummer, setAngebotsnummer] = useState(initialProject.angebotsnummer);
-    const [client, setClient] = useState(initialProject.client);
-    const [frameContract, setFrameContract] = useState(initialProject.frameContract);
-    const [purchaseOrder, setPurchaseOrder] = useState(initialProject.purchaseOrder);
-    const [projectName, setProjectName] = useState(initialProject.projectName);
-    const [linkToProjectFolder, setLinkToProjectFolder] = useState(initialProject.linkToProjectFolder);
-    const [targetMargin, setTargetMargin] = useState(initialProject.targetMargin);
-    const [revenue, setRevenue] = useState(initialProject.revenue);
-    const [manDays, setManDays] = useState(initialProject.manDays);
-    const [status, setStatus] = useState(initialProject.status);
-    const [name, setName] = useState(initialProject.name);
-    const [periodStart, setPeriodStart] = useState(
-        initialProject.periodStart ? new Date(initialProject.periodStart).toISOString().split("T")[0] : ""
-    );
-    const [periodEnd, setPeriodEnd] = useState(
-        initialProject.periodEnd ? new Date(initialProject.periodEnd).toISOString().split("T")[0] : ""
-    );
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-
-        const payload = {
-            projectlead: projectLead,
-            angebotsnummer,
-            client,
-            framecontract: frameContract,
-            purchaseorder: purchaseOrder,
-            projectname: projectName,
-            linktoprojectfolder: linkToProjectFolder,
-            targetmargin: targetMargin,
-            revenue,
-            mandays: manDays,
-            status,
-            name,
-            periodstart: new Date(periodStart),
-            periodend: new Date(periodEnd),
-        };
-
-        const { data, error } = await supabase
-            .from("projects")
-            .update(payload)
-            .eq("id", initialProject.id)
-            .single();
-
-        if (!error && data) {
-            const transformed: ProjectSchema = {
-                id: data.id,
-                projectLead: data.projectlead,
-                angebotsnummer: data.angebotsnummer,
-                client: data.client,
-                frameContract: data.framecontract,
-                purchaseOrder: data.purchaseorder,
-                projectName: data.projectname,
-                linkToProjectFolder: data.linktoprojectfolder,
-                targetMargin: data.targetmargin,
-                revenue: data.revenue,
-                manDays: data.mandays,
-                status: data.status,
-                name: data.name,
-                periodStart: data.periodstart,
-                periodEnd: data.periodend,
-            };
-            onProjectUpdated(transformed);
-        } else {
-            console.error("Error updating project:", error);
-        }
-        setIsSubmitting(false);
-        onOpenChange(false);
-    };
-
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Edit Project</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-                    {/* input fields here as in original code */}
-                    <DialogFooter>
-                        <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? "Updating..." : "Update"}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
-    );
+const formatPercentage = (value: number) => {
+    return new Intl.NumberFormat("de-DE", { style: "percent", minimumFractionDigits: 1 }).format(value)
 }
 
-// ❌ Delete Project Modal
-function DeleteProjectModal({
-                                project,
-                                onProjectDeleted,
-                                open,
-                                onOpenChange,
-                            }: {
-    project: ProjectSchema;
-    onProjectDeleted: (projectId: string) => void;
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-}) {
-    const [isDeleting, setIsDeleting] = useState(false);
-
-    const handleDelete = async () => {
-        setIsDeleting(true);
-        const { error } = await supabase.from("projects").delete().eq("id", project.id);
-        if (!error) {
-            onProjectDeleted(project.id);
-            onOpenChange(false);
-        } else {
-            console.error("Delete error:", error);
-        }
-        setIsDeleting(false);
-    };
-
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Confirm Delete</DialogTitle>
-                    <DialogDescription>
-                        Are you sure you want to delete <strong>{project.projectName}</strong>?
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        Cancel
-                    </Button>
-                    <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-                        {isDeleting ? "Deleting..." : "Delete"}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
+const formatDate = (date: Date) => {
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+        return "Invalid date";
+    }
+    return new Intl.DateTimeFormat("de-DE").format(date);
 }
 
-// 🎯 Main Project Page
-export default function ProjectPage() {
-    const [projects, setProjects] = useState<ProjectSchema[]>([]);
+export default function ProjectsTable() {
+    const id = useId();
+    const [sorting, setSorting] = useState<SortingState>([])
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+    const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+    const { isCollapsed } = useSidebar();
     const [loading, setLoading] = useState(true);
+    const [projects, setProjects] = useState<ProjectSchema[]>([]);
 
     useEffect(() => {
-        (async () => {
-            const [projectsRes, usersRes] = await Promise.all([
-                supabase.from("projects").select("*"),
-                supabase.from("users").select("id, name"),
-            ]);
+        const fetchProjects = async () => {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from("projects")
+                .select("*")
 
-            if (projectsRes.error) {
-                console.error("Error fetching projects:", projectsRes.error);
-                return;
+            if (error) {
+                console.error("Error fetching projects:", error);
             }
+            else {
+                const parsedData: ProjectSchema[] = data.map((project: any) => ({
+                    ...project,
 
-            if (usersRes.error) {
-                console.error("Error fetching users:", usersRes.error);
-                return;
+                    id: project.id,
+                    project_lead: project.project_lead,
+                    angebotsnummer: project.angebotsnummer,
+                    client: project.client,
+                    frame_contract: project.frame_contract,
+                    purchase_order: project.purchase_order,
+                    project_name: project.project_name,
+                    link_to_project_folder: project.link_to_project_folder,
+                    target_margin: typeof project.target_margin === "string" ? parseFloat(project.target_margin) : project.target_margin,
+                    revenue: typeof project.revenue === "string" ? parseFloat(project.revenue) : project.revenue,
+                    man_days: typeof project.man_days === "string" ? parseFloat(project.man_days) : project.man_days,
+                    status: project.status,
+                    name: project.name,
+                    period_start: new Date(project.period_start),
+                    period_end: new Date(project.period_end),
+                }));
+                setProjects(parsedData);
             }
-
-            const usersMap = new Map(usersRes.data.map((u) => [u.id, u.name]));
-
-            const enrichedProjects = projectsRes.data.map((project: any) => ({
-                ...project,
-                frameContract: project.framecontract,
-                purchaseOrder: project.purchaseorder,
-                projectName: project.projectname,
-                projectFolder: project.linktoprojectfolder,
-                periodStart: project.periodstart,
-                periodEnd: project.periodend,
-                projectLeadName: usersMap.get(project.projectlead) || "Unknown",
-                projectLead: project.projectlead,
-            }));
-
-            setProjects(enrichedProjects);
             setLoading(false);
-        })();
+        };
+
+        fetchProjects();
     }, []);
 
-
     const columns: ColumnDef<ProjectSchema>[] = [
-        // 1) Row selection checkbox
         {
-            id: "select",
-            header: ({ table }) => (
-                <input
-                    type="checkbox"
-                    checked={table.getIsAllPageRowsSelected()}
-                    onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
-                    aria-label="Select all"
-                />
-            ),
-            cell: ({ row }) => (
-                <input
-                    type="checkbox"
-                    checked={row.getIsSelected()}
-                    onChange={(e) => row.toggleSelected(e.target.checked)}
-                    aria-label="Select row"
-                />
-            ),
-            enableSorting: false,
-            enableHiding: false,
-            size: 28,
-        },
-
-        // 2) id
-        {
-            header: "ID",
-            accessorKey: "id",
-            size: 150,
-            cell: ({ row }) => <span>{row.getValue("id")}</span>,
-        },
-
-        // 3) projectLead
-        {
-            header: "Project Lead",
-            accessorKey: "projectLeadName",
-            cell: ({ row }) => (
-                <div className="max-w-[180px] truncate">
-                    {row.getValue("projectLeadName")}
-                </div>
-            ),
-            size: 180,
-        },
-        // 4) angebotsnummer
-        {
-            header: "Angebotsnummer",
-            accessorKey: "angebotsnummer",
-            size: 150,
-        },
-
-        // 5) client
-        {
-            header: "Client",
-            accessorKey: "client",
-            size: 180,
-        },
-
-        // 6) frameContract
-        {
-            header: "Frame Contract",
-            accessorKey: "frameContract",
-            size: 160,
-        },
-
-        // 7) purchaseOrder
-        {
-            header: "Purchase Order",
-            accessorKey: "purchaseOrder",
-            size: 150,
-        },
-
-        // 8) projectName
-        {
-            header: "Project Name",
-            accessorKey: "projectName",
-            cell: ({ row }) => (
-                <div className="font-medium">{row.getValue("projectName")}</div>
-            ),
-            size: 180,
-        },
-
-        // 9) linkToProjectFolder
-        {
-            header: "Project Folder",
-            accessorKey: "projectFolder",
+            id: "expander",
+            header: () => null,
             cell: ({ row }) => {
-                const url = row.getValue<string>("projectFolder");
-                return url ? (
-                    <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
-                        Open Folder
-                    </a>
-                ) : (
-                    <span className="text-muted-foreground">No link</span>
-                );
-            },
-            size: 160,
-        },
-
-        // 10) targetMargin
-        {
-            header: "Target Margin",
-            accessorKey: "targetMargin",
-            size: 100,
-        },
-
-        // 11) revenue
-        {
-            header: "Revenue",
-            accessorKey: "revenue",
-            size: 100,
-        },
-
-        // 12) manDays
-        {
-            header: "Man Days",
-            accessorKey: "manDays",
-            size: 80,
-        },
-
-        // 13) status
-        {
-            header: "Status",
-            accessorKey: "status",
-            cell: ({ row }) => (
-                <Badge
-                    className={cn(
-                        row.getValue("status") === "Inactive" && "bg-muted-foreground/60 text-primary-foreground"
-                    )}
-                >
-                    {row.getValue("status")}
-                </Badge>
-            ),
-            size: 120,
-        },
-
-        // 14) name
-        {
-            header: "Name",
-            accessorKey: "name",
-            size: 140,
-        },
-
-        // 15) periodStart
-        {
-            header: "Period Start",
-            accessorKey: "periodStart",
-            cell: ({ row }) => {
-                const dateVal = row.getValue<Date>("periodStart");
-                return dateVal ? new Date(dateVal).toLocaleDateString() : "";
-            },
-            size: 120,
-        },
-
-        // 16) periodEnd
-        {
-            header: "Period End",
-            accessorKey: "periodEnd",
-            cell: ({ row }) => {
-                const dateVal = row.getValue<Date>("periodEnd");
-                return dateVal ? new Date(dateVal).toLocaleDateString() : "";
-            },
-            size: 120,
-        },
-
-        // 17) Actions (edit/delete)
-        {
-            id: "actions",
-            header: () => <span className="sr-only">Actions</span>,
-            cell: ({ row }) => {
-                const [editOpen, setEditOpen] = useState(false);
-                const [deleteOpen, setDeleteOpen] = useState(false);
                 return (
-                    <>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <div className="flex justify-end">
-                                    <Button size="icon" variant="ghost" className="shadow-none" aria-label="Edit project">
-                                        <Ellipsis size={16} strokeWidth={2} aria-hidden="true" />
-                                    </Button>
-                                </div>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuGroup>
-                                    <DropdownMenuItem onClick={() => setEditOpen(true)}>Edit</DropdownMenuItem>
-                                    <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                                </DropdownMenuGroup>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuGroup>
-                                    <DropdownMenuItem>Archive</DropdownMenuItem>
-                                    <DropdownMenuSub>
-                                        <DropdownMenuSubTrigger>More</DropdownMenuSubTrigger>
-                                        <DropdownMenuPortal>
-                                            <DropdownMenuSubContent>
-                                                <DropdownMenuItem>Move to folder</DropdownMenuItem>
-                                                <DropdownMenuItem>Advanced options</DropdownMenuItem>
-                                            </DropdownMenuSubContent>
-                                        </DropdownMenuPortal>
-                                    </DropdownMenuSub>
-                                </DropdownMenuGroup>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuGroup>
-                                    <DropdownMenuItem>Share</DropdownMenuItem>
-                                    <DropdownMenuItem>Add to favorites</DropdownMenuItem>
-                                </DropdownMenuGroup>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
-                                    Delete
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                        <EditProjectModal
-                            initialProject={row.original}
-                            open={editOpen}
-                            onOpenChange={setEditOpen}
-                            onProjectUpdated={(updatedProject) => {
-                            }}
-                        />
-                        <DeleteProjectModal
-                            project={row.original}
-                            open={deleteOpen}
-                            onOpenChange={setDeleteOpen}
-                            onProjectDeleted={(projectId) => {
-                            }}
-                        />
-                    </>
-                );
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            const newExpanded = { ...expanded }
+                            newExpanded[row.id] = !expanded[row.id]
+                            setExpanded(newExpanded)
+                        }}
+                        className="p-0 h-8 w-8"
+                    >
+                        {expanded[row.id] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    </Button>
+                )
             },
         },
-    ];
+        {
+            accessorKey: "id",
+            header: "Project ID",
+            cell: ({ row }) => <div className="font-medium">{row.getValue("id")}</div>,
+        },
+        {
+            accessorKey: "client",
+            header: "Client",
+        },
+        {
+            accessorKey: "projectName",
+            header: "Project Name",
+        },
+        {
+            accessorKey: "status",
+            header: "Status",
+            cell: ({ row }) => {
+                const status = row.getValue("status") as string
+                return (
+                    <Badge
+                        className={cn(
+                            status === "Active"
+                                ? "bg-green-100 text-green-800 hover:bg-green-100"
+                                : status === "Inactive"
+                                    ? "bg-gray-100 text-gray-800 hover:bg-gray-100"
+                                    : status === "Pending"
+                                        ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+                                        : "bg-blue-100 text-blue-800 hover:bg-blue-100",
+                        )}
+                    >
+                        {status}
+                    </Badge>
+                )
+            },
+        },
+    ]
 
+    const table = useReactTable({
+        data: projects,
+        columns,
+        onSortingChange: setSorting,
+        onColumnFiltersChange: setColumnFilters,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        state: {
+            sorting,
+            columnFilters,
+        },
+        initialState: {
+            pagination: {
+                pageSize: 10,
+            },
+        },
+    })
+
+    const renderExpandedRow = (project: ProjectSchema) => {
+        return (
+            <div className="p-4 bg-muted/50 rounded-md space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <Card>
+                        <CardContent className="pt-6">
+                            <h3 className="text-sm font-medium flex items-center gap-2 mb-4">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                Project Details
+                            </h3>
+                            <div className="space-y-2">
+                                <div className="grid grid-cols-2 gap-1">
+                                    <span className="text-sm text-muted-foreground">Full Name:</span>
+                                    <span className="text-sm">{project.name}</span>
+
+                                    <span className="text-sm text-muted-foreground">Angebotsnummer:</span>
+                                    <span className="text-sm">{project.angebotsnummer}</span>
+
+                                    <span className="text-sm text-muted-foreground">Frame Contract:</span>
+                                    <span className="text-sm">{project.frame_contract}</span>
+
+                                    <span className="text-sm text-muted-foreground">Purchase Order:</span>
+                                    <span className="text-sm">{project.purchase_order}</span>
+                                </div>
+
+                                <div className="mt-2 pt-2 border-t">
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <Link2 className="h-4 w-4 text-muted-foreground" />
+                                        <a
+                                            href={project.link_to_project_folder}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:underline truncate"
+                                        >
+                                            Project Folder
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardContent className="pt-6">
+                            <h3 className="text-sm font-medium flex items-center gap-2 mb-4">
+                                <Users className="h-4 w-4 text-muted-foreground" />
+                                Project Management
+                            </h3>
+                            <div className="space-y-2">
+                                <div className="grid grid-cols-2 gap-1">
+                                    <span className="text-sm text-muted-foreground">Project Lead ID:</span>
+                                    <span className="text-sm">{project.project_lead}</span>
+
+                                    <span className="text-sm text-muted-foreground">Status:</span>
+                                    <span className="text-sm">
+                    <Badge
+                        className={cn(
+                            "mt-1",
+                            project.status === "Active"
+                                ? "bg-green-100 text-green-800 hover:bg-green-100"
+                                : project.status === "Inactive"
+                                    ? "bg-gray-100 text-gray-800 hover:bg-gray-100"
+                                    : project.status === "Pending"
+                                        ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+                                        : "bg-blue-100 text-blue-800 hover:bg-blue-100",
+                        )}
+                    >
+                      {project.status}
+                    </Badge>
+                  </span>
+                                </div>
+
+                                <div className="mt-2 pt-2 border-t">
+                                    <div className="grid grid-cols-2 gap-1">
+                                        <span className="text-sm text-muted-foreground">Period Start:</span>
+                                        <span className="text-sm">{formatDate(project.period_start)}</span>
+
+                                        <span className="text-sm text-muted-foreground">Period End:</span>
+                                        <span className="text-sm">{formatDate(project.period_end)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardContent className="pt-6">
+                            <h3 className="text-sm font-medium flex items-center gap-2 mb-4">
+                                <Clipboard className="h-4 w-4 text-muted-foreground" />
+                                Financial Details
+                            </h3>
+                            <div className="space-y-2">
+                                <div className="grid grid-cols-2 gap-1">
+                                    <span className="text-sm text-muted-foreground">Revenue:</span>
+                                    <span className="text-sm font-medium">{formatCurrency(project.revenue)}</span>
+
+                                    <span className="text-sm text-muted-foreground">Man Days:</span>
+                                    <span className="text-sm">{project.man_days}</span>
+
+                                    <span className="text-sm text-muted-foreground">Target Margin:</span>
+                                    <span className="text-sm">{formatPercentage(project.target_margin)}</span>
+
+                                    <span className="text-sm text-muted-foreground">Est. Value per Day:</span>
+                                    <span className="text-sm">{formatCurrency(project.revenue / project.man_days)}</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        )
+    }
 
     return (
-        <GenericTable<ProjectSchema>
-            data={projects}
-            columns={columns}
-            globalFilterKey="projectName"
-            renderActions={<CreateProjectModal onProjectAdded={(p) => setProjects((prev) => [...prev, p])} />}
-        />
-    );
+        <div className={`transition-all duration-300 ${isCollapsed ? 'ml-[3rem]' : 'ml-[15rem]'} p-6`}>
+            <div className="w-full space-y-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <TbAddressBook className="h-5 w-5 text-muted-foreground"/>
+                        <h2 className="text-xl font-semibold">Projects</h2>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Input
+                            placeholder="Filter by client..."
+                            value={(table.getColumn("client")?.getFilterValue() as string) ?? ""}
+                            onChange={(event) => table.getColumn("client")?.setFilterValue(event.target.value)}
+                            className="max-w-sm"
+                        />
+                        <Input
+                            placeholder="Filter by project name..."
+                            value={(table.getColumn("projectName")?.getFilterValue() as string) ?? ""}
+                            onChange={(event) => table.getColumn("projectName")?.setFilterValue(event.target.value)}
+                            className="max-w-sm"
+                        />
+                    </div>
+                </div>
+
+                <div className="rounded-md border">
+                    <Table>
+                        <TableHeader>
+                            {table.getHeaderGroups().map((headerGroup) => (
+                                <TableRow key={headerGroup.id}>
+                                    {headerGroup.headers.map((header) => (
+                                        <TableHead key={header.id}>
+                                            {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                                        </TableHead>
+                                    ))}
+                                </TableRow>
+                            ))}
+                        </TableHeader>
+                        <TableBody>
+                            {table.getRowModel().rows?.length ? (
+                                table.getRowModel().rows.map((row) => (
+                                    <React.Fragment key={row.id}>
+                                        <TableRow
+                                            data-state={row.getIsSelected() && "selected"}
+                                            className={cn(
+                                                "cursor-pointer transition-colors hover:bg-muted/50",
+                                                expanded[row.id] && "bg-muted/50",
+                                            )}
+                                            onClick={() => {
+                                                // Toggle expanded state when row is clicked
+                                                const newExpanded = {...expanded}
+                                                newExpanded[row.id] = !expanded[row.id]
+                                                setExpanded(newExpanded)
+                                            }}
+                                        >
+                                            {row.getVisibleCells().map((cell) => (
+                                                <TableCell
+                                                    key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                                            ))}
+                                        </TableRow>
+                                        {expanded[row.id] && (
+                                            <TableRow className="bg-transparent">
+                                                <TableCell colSpan={columns.length} className="p-0">
+                                                    <div
+                                                        className="overflow-hidden transition-all duration-300 ease-in-out">
+                                                        {renderExpandedRow(row.original)}
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </React.Fragment>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                                        No results.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                <div className="flex justify-between">
+                    <div className="flex gap-3">
+                        <Label htmlFor={id}>Rows per page</Label>
+                        <Select
+                            value={table.getState().pagination.pageSize.toString()}
+                            onValueChange={(value) => table.setPageSize(Number(value))}
+                        >
+                            <SelectTrigger id={id} className="w-fit">
+                                <SelectValue/>
+                            </SelectTrigger>
+                            <SelectContent>
+                                {[5, 10, 25, 50].map((pageSize) => (
+                                    <SelectItem key={pageSize} value={pageSize.toString()}>
+                                        {pageSize}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="flex gap-2">
+                        <Button size="icon" variant="outline" onClick={() => table.firstPage()}
+                                disabled={!table.getCanPreviousPage()}>
+                            <ChevronFirst size={16}/>
+                        </Button>
+                        <Button size="icon" variant="outline" onClick={() => table.previousPage()}
+                                disabled={!table.getCanPreviousPage()}>
+                            <ChevronLeft size={16}/>
+                        </Button>
+                        <Button size="icon" variant="outline" onClick={() => table.nextPage()}
+                                disabled={!table.getCanNextPage()}>
+                            <ChevronRight size={16}/>
+                        </Button>
+                        <Button size="icon" variant="outline" onClick={() => table.lastPage()}
+                                disabled={!table.getCanNextPage()}>
+                            <ChevronLast size={16}/>
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
 }
