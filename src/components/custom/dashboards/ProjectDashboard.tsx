@@ -16,29 +16,21 @@ import {useEffect, useId, useState} from "react";
 import {supabase} from "@/lib/supabase";
 import {ProjectSchema} from "@/types/project";
 import {TbAddressBook} from "react-icons/tb";
-
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(amount)
-}
-
-const formatPercentage = (value: number) => {
-    return new Intl.NumberFormat("de-DE", { style: "percent", minimumFractionDigits: 1 }).format(value)
-}
-
-const formatDate = (date: Date) => {
-    if (!(date instanceof Date) || isNaN(date.getTime())) {
-        return "Invalid date";
-    }
-    return new Intl.DateTimeFormat("de-DE").format(date);
-}
+import {formatCurrency} from "@/lib/currency_formater";
+import {formatPercentage} from "@/lib/percentage_formater";
+import AddProjectModal from "@/components/custom/project/AddProjectModal";
+import {UserSchema} from "@/types/user";
+import {formatDate} from "@/lib/date_formater";
 
 export default function ProjectsDashboard() {
     const id = useId();
     const { isCollapsed } = useSidebar();
+    const [openCreateModal, setOpenCreateModal] = useState(false);
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
     const [expanded, setExpanded] = useState<Record<string, boolean>>({})
     const [projects, setProjects] = useState<ProjectSchema[]>([]);
+    const [users, setUsers] = useState<UserSchema[]>([])
 
     useEffect(() => {
         const fetchProjects = async () => {
@@ -64,6 +56,21 @@ export default function ProjectsDashboard() {
         };
 
         fetchProjects();
+    }, []);
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            const { data, error } = await supabase.from("users").select("*")
+
+            if (error) {
+                console.error("Error fetching users:", error);
+            }
+            else {
+                setUsers(data);
+            }
+        };
+
+        fetchUsers();
     }, []);
 
     const columns: ColumnDef<ProjectSchema>[] = [
@@ -98,7 +105,7 @@ export default function ProjectsDashboard() {
             header: "Client",
         },
         {
-            accessorKey: "projectName",
+            accessorKey: "project_name",
             header: "Project Name",
         },
         {
@@ -157,8 +164,8 @@ export default function ProjectsDashboard() {
                             </h3>
                             <div className="space-y-2">
                                 <div className="grid grid-cols-2 gap-1">
-                                    <span className="text-sm text-muted-foreground">Full Name:</span>
-                                    <span className="text-sm">{project.name}</span>
+                                    <span className="text-sm text-muted-foreground">Project Name:</span>
+                                    <span className="text-sm">{project.project_name}</span>
 
                                     <span className="text-sm text-muted-foreground">Angebotsnummer:</span>
                                     <span className="text-sm">{project.angebotsnummer}</span>
@@ -195,26 +202,26 @@ export default function ProjectsDashboard() {
                             </h3>
                             <div className="space-y-2">
                                 <div className="grid grid-cols-2 gap-1">
-                                    <span className="text-sm text-muted-foreground">Project Lead ID:</span>
-                                    <span className="text-sm">{project.project_lead}</span>
+                                    <span className="text-sm text-muted-foreground">Project Lead:</span>
+                                    <span className="text-sm">{getUserName(project.project_lead)}</span>
 
                                     <span className="text-sm text-muted-foreground">Status:</span>
                                     <span className="text-sm">
-                    <Badge
-                        className={cn(
-                            "mt-1",
-                            project.status === "Active"
-                                ? "bg-green-100 text-green-800 hover:bg-green-100"
-                                : project.status === "Inactive"
-                                    ? "bg-gray-100 text-gray-800 hover:bg-gray-100"
-                                    : project.status === "Pending"
-                                        ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
-                                        : "bg-blue-100 text-blue-800 hover:bg-blue-100",
-                        )}
-                    >
-                      {project.status}
-                    </Badge>
-                  </span>
+                                    <Badge
+                                        className={cn(
+                                            "mt-1",
+                                            project.status === "Active"
+                                                ? "bg-green-100 text-green-800 hover:bg-green-100"
+                                                : project.status === "Inactive"
+                                                    ? "bg-gray-100 text-gray-800 hover:bg-gray-100"
+                                                    : project.status === "Pending"
+                                                        ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+                                                        : "bg-blue-100 text-blue-800 hover:bg-blue-100",
+                                        )}
+                                    >
+                                      {project.status}
+                                    </Badge>
+                                  </span>
                                 </div>
 
                                 <div className="mt-2 pt-2 border-t">
@@ -258,128 +265,148 @@ export default function ProjectsDashboard() {
         )
     }
 
+    const getUserName = (userId: string) => {
+        return users.find((u) => u.id === userId)?.name || userId
+    }
+
     return (
-        <div className={`transition-all duration-300 ${isCollapsed ? 'ml-[3rem]' : 'ml-[15rem]'} p-6`}>
-            <div className="w-full space-y-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <TbAddressBook className="h-5 w-5 text-muted-foreground"/>
-                        <h2 className="text-xl font-semibold">Projects</h2>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Input
-                            placeholder="Filter by client..."
-                            value={(table.getColumn("client")?.getFilterValue() as string) ?? ""}
-                            onChange={(event) => table.getColumn("client")?.setFilterValue(event.target.value)}
-                            className="max-w-sm"
-                        />
-                        <Input
-                            placeholder="Filter by project name..."
-                            value={(table.getColumn("projectName")?.getFilterValue() as string) ?? ""}
-                            onChange={(event) => table.getColumn("projectName")?.setFilterValue(event.target.value)}
-                            className="max-w-sm"
-                        />
-                    </div>
-                </div>
+        <>
 
-                <div className="rounded-md border">
-                    <Table>
-                        <TableHeader>
-                            {table.getHeaderGroups().map((headerGroup) => (
-                                <TableRow key={headerGroup.id}>
-                                    {headerGroup.headers.map((header) => (
-                                        <TableHead key={header.id}>
-                                            {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                                        </TableHead>
-                                    ))}
-                                </TableRow>
-                            ))}
-                        </TableHeader>
-                        <TableBody>
-                            {table.getRowModel().rows?.length ? (
-                                table.getRowModel().rows.map((row) => (
-                                    <React.Fragment key={row.id}>
-                                        <TableRow
-                                            data-state={row.getIsSelected() && "selected"}
-                                            className={cn(
-                                                "cursor-pointer transition-colors hover:bg-muted/50",
-                                                expanded[row.id] && "bg-muted/50",
-                                            )}
-                                            onClick={() => {
-                                                // Toggle expanded state when row is clicked
-                                                const newExpanded = {...expanded}
-                                                newExpanded[row.id] = !expanded[row.id]
-                                                setExpanded(newExpanded)
-                                            }}
-                                        >
-                                            {row.getVisibleCells().map((cell) => (
-                                                <TableCell
-                                                    key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                                            ))}
-                                        </TableRow>
-                                        {expanded[row.id] && (
-                                            <TableRow className="bg-transparent">
-                                                <TableCell colSpan={columns.length} className="p-0">
-                                                    <div
-                                                        className="overflow-hidden transition-all duration-300 ease-in-out">
-                                                        {renderExpandedRow(row.original)}
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-                                    </React.Fragment>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={columns.length} className="h-24 text-center">
-                                        No results.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
+            {openCreateModal && (
+                <AddProjectModal
+                    open={openCreateModal}
+                    onClose={() => setOpenCreateModal(false)}
+                    onProjectCreated={(newProjects) => setProjects(newProjects)}
+                />
+            )}
 
-                <div className="flex justify-between">
-                    <div className="flex gap-3">
-                        <Label htmlFor={id}>Rows per page</Label>
-                        <Select
-                            value={table.getState().pagination.pageSize.toString()}
-                            onValueChange={(value) => table.setPageSize(Number(value))}
-                        >
-                            <SelectTrigger id={id} className="w-fit">
-                                <SelectValue/>
-                            </SelectTrigger>
-                            <SelectContent>
-                                {[5, 10, 25, 50].map((pageSize) => (
-                                    <SelectItem key={pageSize} value={pageSize.toString()}>
-                                        {pageSize}
-                                    </SelectItem>
+
+            <div className={`transition-all duration-300 ${isCollapsed ? 'ml-[3rem]' : 'ml-[15rem]'} p-6`}>
+                <div className="w-full space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <TbAddressBook className="h-5 w-5 text-muted-foreground"/>
+                            <h2 className="text-xl font-semibold">Projects</h2>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <Input
+                                placeholder="Filter by client..."
+                                value={(table.getColumn("client")?.getFilterValue() as string) ?? ""}
+                                onChange={(event) => table.getColumn("client")?.setFilterValue(event.target.value)}
+                                className="max-w-sm"
+                            />
+                            <Input
+                                placeholder="Filter by project name..."
+                                value={(table.getColumn("projectName")?.getFilterValue() as string) ?? ""}
+                                onChange={(event) => table.getColumn("projectName")?.setFilterValue(event.target.value)}
+                                className="max-w-sm"
+                            />
+                            <Button onClick={() => setOpenCreateModal(true)}>
+                                Add Project
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div className="rounded-md border">
+                        <Table>
+                            <TableHeader>
+                                {table.getHeaderGroups().map((headerGroup) => (
+                                    <TableRow key={headerGroup.id}>
+                                        {headerGroup.headers.map((header) => (
+                                            <TableHead key={header.id}>
+                                                {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                                            </TableHead>
+                                        ))}
+                                    </TableRow>
                                 ))}
-                            </SelectContent>
-                        </Select>
+                            </TableHeader>
+                            <TableBody>
+                                {table.getRowModel().rows?.length ? (
+                                    table.getRowModel().rows.map((row) => (
+                                        <React.Fragment key={row.id}>
+                                            <TableRow
+                                                data-state={row.getIsSelected() && "selected"}
+                                                className={cn(
+                                                    "cursor-pointer transition-colors hover:bg-muted/50",
+                                                    expanded[row.id] && "bg-muted/50",
+                                                )}
+                                                onClick={() => {
+                                                    // Toggle expanded state when row is clicked
+                                                    const newExpanded = {...expanded}
+                                                    newExpanded[row.id] = !expanded[row.id]
+                                                    setExpanded(newExpanded)
+                                                }}
+                                            >
+                                                {row.getVisibleCells().map((cell) => (
+                                                    <TableCell
+                                                        key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                                                ))}
+                                            </TableRow>
+                                            {expanded[row.id] && (
+                                                <TableRow className="bg-transparent">
+                                                    <TableCell colSpan={columns.length} className="p-0">
+                                                        <div
+                                                            className="overflow-hidden transition-all duration-300 ease-in-out">
+                                                            {renderExpandedRow(row.original)}
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </React.Fragment>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={columns.length} className="h-24 text-center">
+                                            No results.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
                     </div>
 
-                    <div className="flex gap-2">
-                        <Button size="icon" variant="outline" onClick={() => table.firstPage()}
-                                disabled={!table.getCanPreviousPage()}>
-                            <ChevronFirst size={16}/>
-                        </Button>
-                        <Button size="icon" variant="outline" onClick={() => table.previousPage()}
-                                disabled={!table.getCanPreviousPage()}>
-                            <ChevronLeft size={16}/>
-                        </Button>
-                        <Button size="icon" variant="outline" onClick={() => table.nextPage()}
-                                disabled={!table.getCanNextPage()}>
-                            <ChevronRight size={16}/>
-                        </Button>
-                        <Button size="icon" variant="outline" onClick={() => table.lastPage()}
-                                disabled={!table.getCanNextPage()}>
-                            <ChevronLast size={16}/>
-                        </Button>
+                    <div className="flex justify-between">
+                        <div className="flex gap-3">
+                            <Label htmlFor={id}>Rows per page</Label>
+                            <Select
+                                value={table.getState().pagination.pageSize.toString()}
+                                onValueChange={(value) => table.setPageSize(Number(value))}
+                            >
+                                <SelectTrigger id={id} className="w-fit">
+                                    <SelectValue/>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {[5, 10, 25, 50].map((pageSize) => (
+                                        <SelectItem key={pageSize} value={pageSize.toString()}>
+                                            {pageSize}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <Button size="icon" variant="outline" onClick={() => table.firstPage()}
+                                    disabled={!table.getCanPreviousPage()}>
+                                <ChevronFirst size={16}/>
+                            </Button>
+                            <Button size="icon" variant="outline" onClick={() => table.previousPage()}
+                                    disabled={!table.getCanPreviousPage()}>
+                                <ChevronLeft size={16}/>
+                            </Button>
+                            <Button size="icon" variant="outline" onClick={() => table.nextPage()}
+                                    disabled={!table.getCanNextPage()}>
+                                <ChevronRight size={16}/>
+                            </Button>
+                            <Button size="icon" variant="outline" onClick={() => table.lastPage()}
+                                    disabled={!table.getCanNextPage()}>
+                                <ChevronLast size={16}/>
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     )
 }

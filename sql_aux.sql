@@ -26,15 +26,14 @@ CREATE TABLE projects (
     project_lead text NOT NULL REFERENCES users(id) ON DELETE SET NULL,
     angebotsnummer text NOT NULL,
     client text NOT NULL,
-    frame_contract text NOT NULL,
+    frame_contract text,
     purchase_order text NOT NULL,
     project_name text NOT NULL,
     link_to_project_folder text NOT NULL,
-    target_margin numeric NOT NULL,
+    target_margin numeric,
     revenue numeric NOT NULL,
     man_days numeric NOT NULL,
     status text NOT NULL,
-    name text NOT NULL,
     description text NOT NULL,
     completed_days text NOT NULL,
     budget numeric NOT NULL,
@@ -46,24 +45,24 @@ CREATE TABLE projects (
 INSERT INTO projects (
     id, project_lead, angebotsnummer, client, frame_contract, purchase_order,
     project_name, link_to_project_folder, target_margin, revenue, man_days,
-    status, name, description, completed_days, budget, period_start, period_end, technologies
+    status, description, completed_days, budget, period_start, period_end, technologies
 ) VALUES
       (
           'PRJ-001', '03a582be-a581-452d-a9b7-ef8a3da08f1e', 'AN-001', 'Acme Corp', 'FC-101', 'PO-5001',
           'Website Redesign', 'https://example.com/folder/prj001', 0.25, 50000, 120,
-          'Active', 'Website Redesign for Acme', 'Redesign Acme’s main site with a modern look.', 20, 60000,
+          'Active', 'Redesign Acme’s main site with a modern look.', 20, 60000,
           '2024-01-01', '2024-06-30', ARRAY['Terraform', 'Java']
       ),
       (
           'PRJ-002', '3057e79e-eb68-4d1c-986e-269b7e84549a', 'AN-002', 'Beta Inc', 'FC-102', 'PO-5002',
           'Mobile App Development', 'https://example.com/folder/prj002', 0.30, 75000, 150,
-          'Active', 'Beta Mobile App', 'Develop a new cross-platform app.', 40, 85000,
+          'Active', 'Develop a new cross-platform app.', 40, 85000,
           '2024-02-01', '2024-08-01', ARRAY['AWS', 'React']
       ),
       (
           'PRJ-003', '5a0b7412-e768-4fde-9b8a-3bfecbb19895', 'AN-003', 'Gamma Ltd', 'FC-103', 'PO-5003',
           'Cloud Migration', 'https://example.com/folder/prj003', 0.20, 65000, 100,
-          'Completed', 'Gamma Cloud Migration', 'Move infrastructure to the cloud.', 100, 70000,
+          'Completed', 'Move infrastructure to the cloud.', 100, 70000,
           '2023-09-01', '2024-01-31', ARRAY['React', 'Java']
       );
 
@@ -74,7 +73,7 @@ CREATE TABLE allocations (
     project_id text NOT NULL REFERENCES projects(id) ON DELETE SET NULL,
     user_id text NOT NULL REFERENCES users(id) ON DELETE SET NULL,
     start_date date NOT NULL,
-    end_date date NOT NULL,
+    end_date date,
     percentage numeric NOT NULL,
     role text NOT NULL
 );

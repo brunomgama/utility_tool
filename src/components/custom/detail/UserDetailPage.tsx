@@ -29,7 +29,7 @@ export default function UserDetailPage({ userId }: { userId: string }) {
     const [projects, setProjects] = useState<{ id: string; project_name: string }[]>([])
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
     const [startDate, setStartDate] = useState<string>("")
-    const [endDate, setEndDate] = useState<string>("")
+    const [endDate, setEndDate] = useState<string>("2999-12-31")
     const [percentage, setPercentage] = useState<number>(0)
     const [projectRole, setProjectRole] = useState<string>("")
 
@@ -100,7 +100,7 @@ export default function UserDetailPage({ userId }: { userId: string }) {
             user_id: user.id,
             project_id: selectedProjectId,
             start_date: startDate,
-            end_date: endDate,
+            end_date: endDate || null,
             percentage,
             role: projectRole,
         })
@@ -477,6 +477,7 @@ export default function UserDetailPage({ userId }: { userId: string }) {
                         type="date"
                         className="w-full border rounded px-3 py-2 text-sm"
                         onChange={(e) => setEndDate(e.target.value)}
+                        value={endDate}
                         placeholder="End Date"
                     />
 
@@ -513,7 +514,7 @@ export default function UserDetailPage({ userId }: { userId: string }) {
                     <DialogFooter>
                         <Button
                             onClick={handleAllocate}
-                            disabled={!selectedProjectId || !startDate || !endDate || !percentage || !projectRole}
+                            disabled={!selectedProjectId || !startDate || !percentage || !projectRole}
                             className="w-full"
                         >
                             Confirm Allocation
