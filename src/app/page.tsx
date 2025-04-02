@@ -1,19 +1,12 @@
-import Dashboard from "@/components/custom/Dashboard";
-import {auth0} from "@/lib/auth0";
-import {redirect} from "next/navigation";
+import HomeDashboard from "@/components/custom/dashboards/HomeDashboard";
+import {validate_user} from "@/lib/validate_user";
 
 export default async function Home() {
-    const session = await auth0.getSession();
-
-    if (!session) {
-        return (
-            redirect("/auth/login")
-        );
-    }
+    await validate_user();
 
     return (
         <main className="container mx-auto py-6">
-            <Dashboard/>
+            <HomeDashboard />
         </main>
     )
 }
