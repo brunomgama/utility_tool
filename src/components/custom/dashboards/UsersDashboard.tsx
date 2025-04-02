@@ -1,15 +1,14 @@
 "use client"
 
-import {ChevronDown, ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Filter, Search, Users} from "lucide-react"
+import {ChevronDown, ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Eye, Filter, MoreHorizontal, Search} from "lucide-react"
 import {type ColumnDef, type ColumnFiltersState, type SortingState, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable} from "@tanstack/react-table"
-
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import {DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger} from "@/components/ui/dropdown-menu"
+import {DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu"
 import {Fragment, useEffect, useId, useState} from "react";
 import {useSidebar} from "@/context/sidebar-context";
 import {Label} from "@/components/ui/label";
@@ -22,9 +21,11 @@ import {TbUsers} from "react-icons/tb";
 import * as React from "react";
 import {getInitials} from "@/lib/initial";
 import {getCountryFlag} from "@/lib/flag";
+import {useRouter} from "next/navigation";
 
 export default function UsersDashboard() {
     const id = useId();
+    const router = useRouter()
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
     const [expanded, setExpanded] = useState<Record<string, boolean>>({})
@@ -119,6 +120,31 @@ export default function UsersDashboard() {
                 )
             },
         },
+        {
+            id: "actions",
+            cell: ({ row }) => {
+                const user = row.original
+
+                return (
+                    <div className="flex justify-end">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => router.push(`/users/${user.id}`)}>
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View Details
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                )
+            },
+        }
     ]
 
     const table = useReactTable({

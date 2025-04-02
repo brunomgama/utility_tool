@@ -6,41 +6,16 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm} from "react-hook-form"
 import { z } from "zod"
 import { ArrowLeft, ArrowRight, CheckCircle, User } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {useCallback, useMemo} from "react";
-import {supabase} from "@/lib/supabase";
+import {useCallback, useState} from "react";
+import { supabase } from "@/lib/supabase";
+import { UserSchema } from "@/types/user";
+import { departments } from "@/types/departments";
 
-// User schema type
-export type UserSchema = {
-    id: string
-    name: string
-    email: string
-    location: string
-    role: "Admin" | "User"
-    department: string
-    status: "Active" | "Inactive" | "Pending"
-}
-
-// Sample departments
-const departments = [
-    "Engineering",
-    "Product",
-    "Design",
-    "Marketing",
-    "Sales",
-    "Customer Support",
-    "Human Resources",
-    "Finance",
-    "Operations",
-    "Legal",
-]
-
-// Form validation schema
 const formSchema = z.object({
     name: z.string().min(2, { message: "Name must be at least 2 characters." }),
     email: z.string().email({ message: "Please enter a valid email address." }),
@@ -53,7 +28,6 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>
 
-// Onboarding steps
 type Step = {
     id: string
     title: string
@@ -84,11 +58,10 @@ const steps: Step[] = [
 ]
 
 export default function OnboardingForm({email, auth_id}: { email: string, auth_id: string }) {
-    const [currentStep, setCurrentStep] = React.useState(0)
-    const [isSubmitting, setIsSubmitting] = React.useState(false)
+    const [currentStep, setCurrentStep] = useState(0)
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const router = useRouter()
 
-    // Initialize form with default values
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         values: {
@@ -125,9 +98,6 @@ export default function OnboardingForm({email, auth_id}: { email: string, auth_i
         }
     }
 
-
-
-    // Navigate to next step
     const nextStep = () => {
         const isLastStep = currentStep === steps.length - 2
 
@@ -138,14 +108,10 @@ export default function OnboardingForm({email, auth_id}: { email: string, auth_i
         }
     }
 
-    // Navigate to previous step
     const prevStep = () => {
         setCurrentStep((prev) => prev - 1)
-
-        console.log(form.getValues())
     }
 
-    // Check if current step fields are valid
     const isCurrentStepValid = () => {
         const currentStepId = steps[currentStep].id
 
@@ -352,7 +318,6 @@ export default function OnboardingForm({email, auth_id}: { email: string, auth_i
     return (
         <div className="flex min-h-screen bg-muted/30 items-center justify-center p-4">
             <div className="w-full max-w-3xl">
-                {/* Progress indicator */}
                 <div className="mb-8">
                     <div className="flex justify-between">
                         {steps.slice(0, -1).map((step, index) => (
@@ -406,14 +371,6 @@ export default function OnboardingForm({email, auth_id}: { email: string, auth_i
                             />
                         )}
                     </div>
-
-                    {/*<div className="relative mt-4">*/}
-                    {/*    <div className="absolute left-0 top-1/2 h-0.5 w-full -translate-y-1/2 bg-muted-foreground/30"/>*/}
-                    {/*    <div*/}
-                    {/*        className="absolute left-0 top-1/2 h-0.5 -translate-y-1/2 bg-primary transition-all duration-300"*/}
-                    {/*        style={{width: `${(currentStep / (steps.length - 2)) * 100}%`}}*/}
-                    {/*    />*/}
-                    {/*</div>*/}
                 </div>
 
                 <Card className="w-full">
