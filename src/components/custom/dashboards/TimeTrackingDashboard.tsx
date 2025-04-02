@@ -44,7 +44,7 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
         description: "",
         status: "Draft",
         tags: [],
-        billable: false,
+        billable: true,
     })
     const [availableTags, setAvailableTags] = useState<string[]>([])
     const [tagInput, setTagInput] = useState("")
@@ -155,9 +155,7 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
     const handleSaveEntry = async () => {
         if (!newEntry.project_id || !newEntry.hours || newEntry.hours <= 0 || !currentUser) return;
 
-        const dateOnly = format(newEntry.date!, "yyyy-MM-dd") // 👈 format to date string
-
-        console.log("dateOnly", dateOnly)
+        const dateOnly = format(newEntry.date!, "yyyy-MM-dd")
 
         const payload = {
             user_id: currentUser.id,
@@ -166,6 +164,7 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
             hours: newEntry.hours,
             description: newEntry.description,
             status: newEntry.status,
+            billable: newEntry.billable,
         }
 
         let error = null
@@ -275,6 +274,7 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
             hours: 0,
             description: "",
             status: "Draft",
+            billable: true,
         })
         setIsEntryDialogOpen(true)
     }
@@ -310,17 +310,31 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
         }))
     }
 
-    const handleBulkApprove = () => {
-        const entriesToApprove = getEntriesForCurrentView().filter((entry) => entry.status === "Submitted")
+    const handleBulkApprove = async () => {
+        const entriesToApprove = getEntriesForCurrentView().filter(
+            (entry) => entry.status === "Submitted"
+        )
 
-        if (entriesToApprove.length === 0) {
+        if (entriesToApprove.length === 0) return
+
+        const ids = entriesToApprove.map((e) => e.id)
+
+        const { error } = await supabase.from("time_tracking").update({ status: "Approved" }).in("id", ids)
+
+        if (error) {
+            console.error("Failed to approve entries:", error)
             return
         }
 
         setTimeEntries((prev) =>
-            prev.map((entry) => (entriesToApprove.some((e) => e.id === entry.id) ? { ...entry, status: "Approved" } : entry)),
+            prev.map((entry) =>
+                ids.includes(entry.id)
+                    ? { ...entry, status: "Approved" }
+                    : entry
+            )
         )
     }
+
 
     const handleSubmitAll = async () => {
         if (!currentUser) return
