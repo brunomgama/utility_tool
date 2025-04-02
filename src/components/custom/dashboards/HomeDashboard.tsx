@@ -40,15 +40,11 @@ export default function DashboardPage() {
     const [users, setUsers] = useState<UserSchema[]>([])
     const [projects, setProjects] = useState<ProjectSchema[]>([])
     const [allocations, setAllocations] = useState<(AllocationSchema & { project?: ProjectSchema })[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
     const [timeEntries, setTimeEntries] = useState<TimeTrackingSchema[]>([])
     const { isCollapsed } = useSidebar();
 
     useEffect(() => {
         const fetchData = async () => {
-            setLoading(true)
-            setError(null)
 
             const [{ data: usersData }, { data: projectsData }, { data: allocationsData }, { data: techData }, { data: timeEntriesData }] =
                 await Promise.all([
@@ -60,8 +56,7 @@ export default function DashboardPage() {
                 ])
 
             if (!usersData || !projectsData || !allocationsData || !techData || !timeEntriesData) {
-                setError("Failed to fetch data from Supabase")
-                setLoading(false)
+                console.error("Failed to fetch data from Supabase")
                 return
             }
 
@@ -97,7 +92,6 @@ export default function DashboardPage() {
             setProjects(formattedProjects)
             setUsers(usersData)
             setAllocations(formattedAllocations)
-            setLoading(false)
         }
 
         fetchData()
@@ -335,7 +329,7 @@ export default function DashboardPage() {
                                                             ? 0
                                                             : Object.entries(projectStatusCounts)
                                                                 .slice(0, index)
-                                                                .reduce((sum, [_, c]) => sum + (c / total) * 360, 0)
+                                                                .reduce((sum, [, c]) => sum + (c / total) * 360, 0)
                                                     const endAngle = startAngle + (percentage / 100) * 360
 
                                                     // Calculate SVG arc path
@@ -634,7 +628,7 @@ export default function DashboardPage() {
                                                             ? 0
                                                             : Object.entries(departmentCounts)
                                                                 .slice(0, index)
-                                                                .reduce((sum, [_, c]) => sum + (c / total) * 360, 0)
+                                                                .reduce((sum, [, c]) => sum + (c / total) * 360, 0)
                                                     const endAngle = startAngle + (percentage / 100) * 360
 
                                                     // Calculate SVG arc path

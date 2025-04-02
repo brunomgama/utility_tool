@@ -25,3 +25,8 @@ export type ProjectResumedSchema = {
     client: string
     status: "Active" | "Inactive" | "Pending" | "Finished"
 }
+
+export type ProjectWithTech = ProjectSchema & {
+    technologies: string[];
+    projectManager: string;
+};

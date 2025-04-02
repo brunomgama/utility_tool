@@ -390,7 +390,7 @@ export default function UnauthenticatedDashboard() {
                             </h2>
                             <p className="text-lg text-muted-foreground">
                                 Our comprehensive platform provides all the tools you need to track time, manage
-                                projects, and optimize your team's productivity.
+                                projects, and optimize your team productivity.
                             </p>
                         </div>
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 justify-center">
@@ -476,7 +476,7 @@ export default function UnauthenticatedDashboard() {
                             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">What our customers
                                 say</h2>
                             <p className="text-lg text-muted-foreground">
-                                Don't just take our word for it. Here's what professionals and teams have to say about
+                                Do not just take our word for it. Here is what professionals and teams have to say about
                                 our platform.
                             </p>
                         </div>
@@ -529,7 +529,7 @@ export default function UnauthenticatedDashboard() {
                             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Simple, transparent
                                 pricing</h2>
                             <p className="text-lg text-muted-foreground">
-                                Choose the plan that's right for you. All plans include a 14-day free trial.
+                                Choose the plan that is right for you. All plans include a 14-day free trial.
                             </p>
                         </div>
 

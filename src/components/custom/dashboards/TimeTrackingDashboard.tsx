@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {supabase} from "@/lib/supabase";
 import {UserSchema} from "@/types/user";
 import {ProjectResumedSchema} from "@/types/project";
@@ -88,7 +88,7 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
         fetchData()
     }, [])
 
-    const fetchTimeEntries = async () => {
+    const fetchTimeEntries = useCallback(async () => {
         let query = supabase.from("time_tracking").select("*").order("date", { ascending: false })
 
         if (!isAdmin) {
@@ -107,13 +107,13 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
         } else {
             setTimeEntries(data)
         }
-    }
+    }, [isAdmin, currentUser?.id, selectedUser, selectedProject])
 
     useEffect(() => {
         if (currentUser) {
             fetchTimeEntries()
         }
-    }, [currentUser, selectedUser, selectedProject, currentDate])
+    }, [currentUser, fetchTimeEntries])
 
     const getUserById = (id: string) => allUsers.find((u) => u.id === id)
     const getProjectById = (id: string) => projects.find((p) => p.id === id)
@@ -445,7 +445,7 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
                         <Clock className="h-12 w-12 text-muted-foreground mb-4" />
                         <h3 className="text-lg font-medium">No Time Entries</h3>
                         <p className="text-muted-foreground max-w-sm mt-2">
-                            No time entries recorded for this day. Click "Add Time" to log your hours.
+                            No time entries recorded for this day. Click &quot;Add Time&quot; to log your hours.
                         </p>
                         <Button className="mt-4" onClick={() => handleAddEntry(currentDate)}>
                             <Plus className="mr-1 h-4 w-4" />
@@ -561,7 +561,6 @@ export default function TimeTrackingPage({ session }: { session: { user: { sub: 
     }
 
     const renderMonthView = () => {
-        const days = getDaysForCurrentView()
         const entries = getEntriesForCurrentView()
         const entriesByDate = groupEntriesByDate(entries)
 

@@ -38,12 +38,10 @@ export default function ProjectsDashboard() {
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
     const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-    const [loading, setLoading] = useState(true);
     const [projects, setProjects] = useState<ProjectSchema[]>([]);
 
     useEffect(() => {
         const fetchProjects = async () => {
-            setLoading(true);
             const { data, error } = await supabase
                 .from("projects")
                 .select("*")
@@ -52,28 +50,17 @@ export default function ProjectsDashboard() {
                 console.error("Error fetching projects:", error);
             }
             else {
-                const parsedData: ProjectSchema[] = data.map((project: any) => ({
+                const parsedData: ProjectSchema[] = data.map((project: ProjectSchema) => ({
                     ...project,
 
-                    id: project.id,
-                    project_lead: project.project_lead,
-                    angebotsnummer: project.angebotsnummer,
-                    client: project.client,
-                    frame_contract: project.frame_contract,
-                    purchase_order: project.purchase_order,
-                    project_name: project.project_name,
-                    link_to_project_folder: project.link_to_project_folder,
                     target_margin: typeof project.target_margin === "string" ? parseFloat(project.target_margin) : project.target_margin,
                     revenue: typeof project.revenue === "string" ? parseFloat(project.revenue) : project.revenue,
                     man_days: typeof project.man_days === "string" ? parseFloat(project.man_days) : project.man_days,
-                    status: project.status,
-                    name: project.name,
                     period_start: new Date(project.period_start),
                     period_end: new Date(project.period_end),
                 }));
                 setProjects(parsedData);
             }
-            setLoading(false);
         };
 
         fetchProjects();

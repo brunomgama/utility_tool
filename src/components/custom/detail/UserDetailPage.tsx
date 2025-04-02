@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils"
 import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,} from "@/components/ui/alert-dialog"
 import {useEffect, useState} from "react";
-import {UserSchema} from "@/types/user";
+import {UserAllocation, UserSchema} from "@/types/user";
 import {getInitials} from "@/lib/initial";
 import {supabase} from "@/lib/supabase";
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog";
@@ -20,7 +20,7 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/c
 
 export default function UserDetailPage({ userId }: { userId: string }) {
     const [user, setUser] = useState<UserSchema | null>(null)
-    const [userAllocations, setUserAllocations] = useState<any[]>([])
+    const [userAllocations, setUserAllocations] = useState<UserAllocation[]>([])
     const [isUpdating, setIsUpdating] = useState(false)
     const router = useRouter()
 
@@ -32,9 +32,7 @@ export default function UserDetailPage({ userId }: { userId: string }) {
     const [percentage, setPercentage] = useState<number>(0)
     const [projectRole, setProjectRole] = useState<string>("")
 
-    const processedUserId = userId.replace("%7C", "|")
-
-    console.log("User ID:", processedUserId)
+    const processedUserId = React.useMemo(() => userId.replace("%7C", "|"), [userId])
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -78,7 +76,7 @@ export default function UserDetailPage({ userId }: { userId: string }) {
         }
 
         fetchUserData()
-    }, [userId])
+    }, [processedUserId])
 
     useEffect(() => {
         if (showAllocateDialog) {
@@ -119,7 +117,7 @@ export default function UserDetailPage({ userId }: { userId: string }) {
         setProjectRole("")
 
         const { data: newAllocations, error: allocationsError } = await supabase
-            .from("allocations").select("id, user_id, project_id")
+            .from("allocations").select("id, user_id, project_id, percentage, role, start_date, end_date")
             .eq("user_id", processedUserId)
 
         if (!allocationsError && newAllocations) {

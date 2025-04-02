@@ -1,8 +1,22 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
-import {ColumnDef, ColumnFiltersState, PaginationState, SortingState, VisibilityState, useReactTable, getCoreRowModel,
-    getSortedRowModel, getPaginationRowModel, getFilteredRowModel, getFacetedUniqueValues, flexRender} from "@tanstack/react-table";
+import {
+    ColumnDef,
+    ColumnFiltersState,
+    PaginationState,
+    SortingState,
+    VisibilityState,
+    useReactTable,
+    getCoreRowModel,
+    getSortedRowModel,
+    getPaginationRowModel,
+    getFilteredRowModel,
+    getFacetedUniqueValues,
+    flexRender,
+    Updater,
+    RowSelectionState
+} from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
@@ -19,9 +33,8 @@ type Props<T> = {
     renderActions?: React.ReactNode;
     viewCondition: boolean;
     rowSelection?: Record<string, boolean>;
-    onRowSelectionChange?: (updater: any) => void;
+    onRowSelectionChange?: (updater: Updater<RowSelectionState>) => void;
 };
-
 
 export default function GenericTable<T>({ data, columns, globalFilterKey, renderActions, viewCondition, rowSelection, onRowSelectionChange }: Props<T>) {
     const id = useId();
