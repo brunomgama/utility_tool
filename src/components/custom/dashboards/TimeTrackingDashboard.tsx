@@ -20,7 +20,7 @@ import {supabase} from "@/lib/supabase";
 import {UserSchema} from "@/types/user";
 import {ProjectResumedSchema} from "@/types/project";
 import {TimeTrackingSchema} from "@/types/time_tracking";
-import {getInitials} from "@/lib/initial";
+import {getInitials} from "@/lib/naming_initials";
 import {useSidebar} from "@/context/sidebar-context";
 
 export default function TimeTrackingPage({ session }: { session: { user: { sub: string; email?: string; name?: string } } }) {

@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,} from "@/components/ui/alert-dialog"
 import {useEffect, useMemo, useState} from "react";
 import {UserAllocation, UserSchema} from "@/types/user";
-import {getInitials} from "@/lib/initial";
+import {getInitials} from "@/lib/naming_initials";
 import {supabase} from "@/lib/supabase";
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";

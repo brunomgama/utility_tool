@@ -19,7 +19,7 @@ import {AllocationSchema} from "@/types/allocation";
 import {supabase} from "@/lib/supabase";
 import {TbUsers} from "react-icons/tb";
 import * as React from "react";
-import {getInitials} from "@/lib/initial";
+import {getInitials} from "@/lib/naming_initials";
 import {getCountryFlag} from "@/lib/flag";
 import {useRouter} from "next/navigation";
 

@@ -29,7 +29,7 @@ import {supabase} from "@/lib/supabase";
 import {TeamSchema} from "@/types/team";
 import {GoalSchema} from "@/types/goals";
 import {TaskSchema} from "@/types/tasks";
-import {getInitials} from "@/lib/initial";
+import {getInitials} from "@/lib/naming_initials";
 import {UserSchema} from "@/types/user";
 
 type GoalPeriod = "monthly" | "quarterly" | "yearly"

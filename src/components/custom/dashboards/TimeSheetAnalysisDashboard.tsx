@@ -16,7 +16,7 @@ import {UserSchema} from "@/types/user";
 import {ProjectSchema} from "@/types/project";
 import {supabase} from "@/lib/supabase";
 import {TimeTrackingSchema} from "@/types/time_tracking";
-import {getInitials} from "@/lib/initial";
+import {getInitials} from "@/lib/naming_initials";
 import {useSidebar} from "@/context/sidebar-context";
 
 export default function TimeAnalyticsPage() {
