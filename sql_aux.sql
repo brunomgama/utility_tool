@@ -101,23 +101,25 @@ INSERT INTO project_technologies (project_id, technology) VALUES
     ('PRJ-003', 'Terraform');
 
 CREATE TABLE time_tracking (
-    id uuid primary key default uuid_generate_v4(),
-    project_id text NOT NULL REFERENCES projects(id) ON DELETE SET NULL,
-    user_id text NOT NULL REFERENCES users(id) ON DELETE SET NULL,
-    date date NOT NULL,
-    hours numeric NOT NULL,
-    description text NOT NULL,
-    status text NOT NULL
+    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE SET NULL,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE SET NULL,
+    date DATE NOT NULL,
+    hours NUMERIC NOT NULL,
+    description TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('Draft', 'Submitted', 'Approved', 'Rejected')),
+    tags TEXT[],
+    billable BOOLEAN
 );
 
-INSERT INTO time_tracking (id, project_id, user_id, date, hours, description, status) VALUES
-    ('158cc4ad-8c08-4c09-905f-bcd111f68beb', 'PRJ-001', '8c8a4c01-b262-4dae-a6e9-d06c48f48c6d', '2024-01-20', 3.5, 'Bug fixing', 'Submitted'),
-    ('1f62017b-c286-45b8-8079-a64e71cd92ae', 'PRJ-001', '8c8a4c01-b262-4dae-a6e9-d06c48f48c6d', '2024-02-29', 3.8, 'Bug fixing', 'Submitted'),
-    ('694a3374-09b2-41a0-8b14-725d90cdc808', 'PRJ-001', '30280c7b-afc3-41bf-b7d2-1fc8016f4bf2', '2024-01-12', 4.0, 'Documentation', 'Submitted'),
-    ('b5932fa4-78ae-42c5-b555-d029e6b7b58a', 'PRJ-002', '79abeeb2-c440-460b-a8a8-76c96c4f017b', '2024-03-24', 6.6, 'Feature development', 'Approved'),
-    ('7db9a7e1-c3c9-417f-8b0a-587fbe757408', 'PRJ-003', '7851514c-661d-4190-9ee1-7e3c63b28e38', '2024-02-14', 4.3, 'Documentation', 'Approved'),
-    ('09322202-d9e5-47b9-b27e-c58c41eb4d84', 'PRJ-001', '30280c7b-afc3-41bf-b7d2-1fc8016f4bf2', '2024-03-01', 3.5, 'Feature development', 'Rejected'),
-    ('a7924a5b-0463-404b-9cf5-cc918d4cf956', 'PRJ-003', '30280c7b-afc3-41bf-b7d2-1fc8016f4bf2', '2024-02-04', 7.1, 'Meeting', 'Approved'),
-    ('5d0389f5-78a6-4e9b-aac4-86562a99d238', 'PRJ-002', '7ec46305-ace1-4730-be14-58983d077e85', '2024-02-20', 6.5, 'Bug fixing', 'Submitted'),
-    ('1940ad6a-3386-4d59-97bc-6f5027a18d0e', 'PRJ-003', '7851514c-661d-4190-9ee1-7e3c63b28e38', '2024-01-29', 2.0, 'Feature development', 'Submitted'),
-    ('2033b32f-47e4-4592-a60b-4018322058f5', 'PRJ-002', '7851514c-661d-4190-9ee1-7e3c63b28e38', '2024-01-18', 7.3, 'Documentation', 'Rejected');
+INSERT INTO time_tracking (id, project_id, user_id, date, hours, description, status, tags, billable) VALUES
+('158cc4ad-8c08-4c09-905f-bcd111f68beb', 'PRJ-001', '8c8a4c01-b262-4dae-a6e9-d06c48f48c6d', '2024-01-20', 3.5, 'Bug fixing', 'Submitted', ARRAY['Bug', 'Fix'], false),
+('1f62017b-c286-45b8-8079-a64e71cd92ae', 'PRJ-001', '8c8a4c01-b262-4dae-a6e9-d06c48f48c6d', '2024-02-29', 3.8, 'Bug fixing', 'Submitted', ARRAY['Bug'], true),
+('694a3374-09b2-41a0-8b14-725d90cdc808', 'PRJ-001', '30280c7b-afc3-41bf-b7d2-1fc8016f4bf2', '2024-01-12', 4.0, 'Documentation', 'Submitted', ARRAY['Documentation'], true),
+('b5932fa4-78ae-42c5-b555-d029e6b7b58a', 'PRJ-002', '79abeeb2-c440-460b-a8a8-76c96c4f017b', '2024-03-24', 6.6, 'Feature development', 'Approved', ARRAY['Development'], true),
+('7db9a7e1-c3c9-417f-8b0a-587fbe757408', 'PRJ-003', '7851514c-661d-4190-9ee1-7e3c63b28e38', '2024-02-14', 4.3, 'Documentation', 'Approved', ARRAY['Documentation'], true),
+('09322202-d9e5-47b9-b27e-c58c41eb4d84', 'PRJ-001', '30280c7b-afc3-41bf-b7d2-1fc8016f4bf2', '2024-03-01', 3.5, 'Feature development', 'Rejected', ARRAY['Development'], true),
+('a7924a5b-0463-404b-9cf5-cc918d4cf956', 'PRJ-003', '30280c7b-afc3-41bf-b7d2-1fc8016f4bf2', '2024-02-04', 7.1, 'Meeting', 'Approved', ARRAY['Meeting'], true),
+('5d0389f5-78a6-4e9b-aac4-86562a99d238', 'PRJ-002', '7ec46305-ace1-4730-be14-58983d077e85', '2024-02-20', 6.5, 'Bug fixing', 'Submitted', ARRAY['Bug'], true),
+('1940ad6a-3386-4d59-97bc-6f5027a18d0e', 'PRJ-003', '7851514c-661d-4190-9ee1-7e3c63b28e38', '2024-01-29', 2.0, 'Feature development', 'Submitted', ARRAY['Development'], true),
+('2033b32f-47e4-4592-a60b-4018322058f5', 'PRJ-002', '7851514c-661d-4190-9ee1-7e3c63b28e38', '2024-01-18', 7.3, 'Documentation', 'Rejected', ARRAY['Documentation'], true);

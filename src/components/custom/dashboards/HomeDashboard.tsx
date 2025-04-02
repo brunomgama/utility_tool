@@ -213,7 +213,7 @@ export default function DashboardPage() {
         .slice(0, 5)
 
     return (
-        <div className={`transition-all duration-300 ${isCollapsed ? 'ml-[3rem]' : 'ml-[15rem]'} p-6`}>
+        <div className={`transition-all duration-300 ${isCollapsed ? 'ml-[1rem]' : 'ml-[10rem]'} p-6`}>
             <div className="w-full space-y-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">

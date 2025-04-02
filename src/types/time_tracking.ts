@@ -6,4 +6,6 @@ export type TimeTrackingSchema = {
     hours: number
     description: string
     status: "Draft" | "Submitted" | "Approved" | "Rejected"
+    tags?: string[],
+    billable?: boolean
 }
