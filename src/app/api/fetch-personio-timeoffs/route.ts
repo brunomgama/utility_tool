@@ -1,7 +1,18 @@
 import { NextResponse } from 'next/server'
 
-export async function GET() {
-    const url = 'https://api.personio.de/v1/company/time-offs?start_date=2025-04-01&end_date=2025-04-30'
+export async function GET(request: Request) {
+    const { searchParams } = new URL(request.url)
+    const startDate = searchParams.get('start_date')
+    const endDate = searchParams.get('end_date')
+
+    if (!startDate || !endDate) {
+        return NextResponse.json({
+            success: false,
+            error: 'Missing required query parameters: start_date and end_date',
+        })
+    }
+
+    const url = `https://api.personio.de/v1/company/time-offs?start_date=${startDate}&end_date=${endDate}`
 
     try {
         const res = await fetch(url, {
@@ -22,6 +33,6 @@ export async function GET() {
         if (err instanceof Error) {
             return NextResponse.json({ success: false, error: err.message })
         }
-        return NextResponse.json({ success: false, error: "Unknown error occurred" })
+        return NextResponse.json({ success: false, error: 'Unknown error occurred' })
     }
 }

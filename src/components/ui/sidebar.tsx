@@ -16,7 +16,7 @@ import {
   UserCog,
 } from "lucide-react";
 import {
-  TbAddressBook,
+  TbAddressBook, TbBeach,
   TbBuildingCommunity,
   TbCalendarTime, TbCheckbox,
   TbLayoutDashboard,
@@ -31,6 +31,7 @@ import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparat
 import { Separator } from "@/components/ui/separator";
 import {useSidebar} from "@/context/sidebar-context";
 import Image from "next/image";
+import * as React from "react";
 
 const sidebarVariants = {
   open: {
@@ -206,6 +207,21 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
                                 TBI
                               </Badge>
                             </div>
+                        )}
+                      </motion.li>
+                    </Link>
+                    <Link
+                        href="/timeoffs"
+                        className={cn(
+                            "flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5   transition hover:bg-muted hover:text-primary",
+
+                            pathname?.includes("timeoffs") && "bg-muted text-blue-600",
+                        )}
+                    >
+                      <TbBeach className="h-4 w-4" />{" "}
+                      <motion.li variants={variants}>
+                        {!isCollapsed && (
+                            <p className="ml-2 text-sm font-medium">Vacations</p>
                         )}
                       </motion.li>
                     </Link>
