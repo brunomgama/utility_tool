@@ -20,7 +20,6 @@ import {departments} from "@/types/department";
 import {TbUser} from "react-icons/tb";
 import {useSidebar} from "@/context/sidebar-context";
 
-// Form schemas
 const profileFormSchema = z.object({
     name: z.string().min(2, {
         message: "Name must be at least 2 characters.",
@@ -40,7 +39,6 @@ export default function ProfileDashboard({ session }: { session: { user: { sub: 
 
     const [isSaving, setIsSaving] = React.useState(false)
 
-    // Profile form
     const profileForm = useForm<z.infer<typeof profileFormSchema>>({
         resolver: zodResolver(profileFormSchema),
         defaultValues: {
@@ -80,7 +78,6 @@ export default function ProfileDashboard({ session }: { session: { user: { sub: 
         fetchCurrentUser()
     }, [session, profileForm])
 
-    // Handle profile form submission
     function onProfileSubmit(data: z.infer<typeof profileFormSchema>) {
         setIsSaving(true)
 

@@ -187,7 +187,7 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
                       </motion.li>
                     </Link>
                     <Link
-                        href="/error"
+                        href="/chat"
                         className={cn(
                             "flex h-8 flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
                             pathname?.includes("chat") && "bg-muted text-blue-600",
@@ -200,11 +200,11 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
                               <p className="text-sm font-medium">Chat</p>
                               <Badge
                                   className={cn(
-                                      "flex h-fit w-fit items-center gap-1.5 rounded border-none bg-red-50 px-1.5 text-red-600 dark:bg-red-700 dark:text-red-300",
+                                      "flex h-fit w-fit items-center gap-1.5 rounded border-none bg-blue-50 px-1.5 text-blue-600 dark:bg-blue-700 dark:text-blue-300",
                                   )}
                                   variant="outline"
                               >
-                                TBI
+                                NEW
                               </Badge>
                             </div>
                         )}
@@ -229,7 +229,7 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
                         href="/timetracking"
                         className={cn(
                             "flex h-8 flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
-                            pathname?.includes("chat") && "bg-muted text-blue-600",
+                            pathname?.includes("timetracking") && "bg-muted text-blue-600",
                         )}
                     >
                       <TbCalendarTime className="h-4 w-4" />{" "}
@@ -281,7 +281,7 @@ export function SessionNavBar({ user }: { user?: { name?: string; email?: string
                         href="/timesheetanalysis"
                         className={cn(
                             "flex h-8 flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary",
-                            pathname?.includes("chat") && "bg-muted text-blue-600",
+                            pathname?.includes("timesheetanalysis") && "bg-muted text-blue-600",
                         )}
                     >
                       <BarChart className="h-4 w-4" />{" "}
