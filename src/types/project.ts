@@ -12,7 +12,6 @@ export type ProjectSchema = {
     man_days: number;
     status: "Active" | "Inactive" | "Pending" | "Finished";
     name: string;
-    description: string
     completed_days: number
     budget: number
     period_start: Date;

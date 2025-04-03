@@ -7,6 +7,7 @@ export const platform_roles = [
 ]
 
 export const project_roles = [
+    "Developer",
     "C2 Development Management",
     "C3 Development (Complex)",
     "Enterprise Architect",
@@ -24,5 +25,4 @@ export const project_roles = [
     "Bredex Sub",
     "Expert IT Security",
     "QM Beratung",
-
 ]

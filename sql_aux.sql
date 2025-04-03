@@ -8,19 +8,6 @@ CREATE TABLE USERS (
     STATUS TEXT NOT NULL
 );
 
-INSERT INTO users ("id", "name", "email", "location", "role", "department", "status")
-VALUES
-    ('03a582be-a581-452d-a9b7-ef8a3da08f1e', 'Fatima Al-Sayed', 'f.alsayed@company.com', 'Cairo, EG', 'Admin', 'IT', 'Active'),
-    ('30280c7b-afc3-41bf-b7d2-1fc8016f4bf2', 'Ewa Kowalski', 'e.kowalski@company.com', 'Seoul, KR', 'User', 'RH', 'Active'),
-    ('3057e79e-eb68-4d1c-986e-269b7e84549a', 'Diego Mendoza', 'd.mendoza@company.com', 'Mexico City, MX', 'User', 'IT', 'Active'),
-    ('5a0b7412-e768-4fde-9b8a-3bfecbb19895', 'Cheng Wei', 'c.wei@company.com', 'Shanghai, CN','User', 'IT', 'Active'),
-    ('671fb99c-efe2-456d-92ec-70229d5c5cbd', 'Emma Laurent', 'e.laurent@company.com', 'Berlin, DE','User', 'IT', 'Active'),
-    ('7851514c-661d-4190-9ee1-7e3c63b28e38', 'Anna Visconti', 'anna.visconti@company.com', 'Rome, IT','User', 'IT', 'Active'),
-    ('79abeeb2-c440-460b-a8a8-76c96c4f017b', 'Alex Thompson', 'a.tompson@company.com', 'San Francisco, US','User', 'IT', 'Inactive'),
-    ('7ec46305-ace1-4730-be14-58983d077e85', 'Astrid Andersen', 'a.andersen@company.com', 'Oslo, NO','User', 'IT', 'Inactive'),
-    ('8c8a4c01-b262-4dae-a6e9-d06c48f48c6d', 'David Kim', 'd.kim@company.com', 'Paris, FR','User', 'IT', 'Active'),
-    ('c2e7b75f-7d0b-42ca-a79b-f3354892713a', 'Alex Allan', 'alex.allan@company.com', 'São Paulo, BR','User', 'IT', 'Active');
-
 CREATE TABLE PROJECTS (
     ID TEXT PRIMARY KEY,
     PROJECT_LEAD TEXT NOT NULL REFERENCES USERS(ID) ON DELETE SET NULL,
@@ -34,37 +21,20 @@ CREATE TABLE PROJECTS (
     REVENUE NUMERIC NOT NULL,
     MAN_DAYS NUMERIC NOT NULL,
     STATUS TEXT NOT NULL,
-    DESCRIPTION TEXT NOT NULL,
-    COMPLETED_DAYS TEXT NOT NULL,
+    COMPLETED_DAYS NUMERIC NOT NULL,
     BUDGET NUMERIC NOT NULL,
     PERIOD_START DATE NOT NULL,
     PERIOD_END DATE NOT NULL,
     TECHNOLOGIES TEXT[]
 );
 
-INSERT INTO projects (
-    id, project_lead, angebotsnummer, client, frame_contract, purchase_order,
-    project_name, link_to_project_folder, target_margin, revenue, man_days,
-    status, description, completed_days, budget, period_start, period_end, technologies
-) VALUES
-      (
-          'PRJ-001', '03a582be-a581-452d-a9b7-ef8a3da08f1e', 'AN-001', 'Acme Corp', 'FC-101', 'PO-5001',
-          'Website Redesign', 'https://example.com/folder/prj001', 0.25, 50000, 120,
-          'Active', 'Redesign Acme’s main site with a modern look.', 20, 60000,
-          '2024-01-01', '2024-06-30', ARRAY['Terraform', 'Java']
-      ),
-      (
-          'PRJ-002', '3057e79e-eb68-4d1c-986e-269b7e84549a', 'AN-002', 'Beta Inc', 'FC-102', 'PO-5002',
-          'Mobile App Development', 'https://example.com/folder/prj002', 0.30, 75000, 150,
-          'Active', 'Develop a new cross-platform app.', 40, 85000,
-          '2024-02-01', '2024-08-01', ARRAY['AWS', 'React']
-      ),
-      (
-          'PRJ-003', '5a0b7412-e768-4fde-9b8a-3bfecbb19895', 'AN-003', 'Gamma Ltd', 'FC-103', 'PO-5003',
-          'Cloud Migration', 'https://example.com/folder/prj003', 0.20, 65000, 100,
-          'Completed', 'Move infrastructure to the cloud.', 100, 70000,
-          '2023-09-01', '2024-01-31', ARRAY['React', 'Java']
-      );
+CREATE TABLE PROJECT_ROLES (
+     ID UUID PRIMARY KEY DEFAULT GEN_RANDOM_UUID(),
+     PROJECT_ID TEXT NOT NULL REFERENCES PROJECTS(ID) ON DELETE SET NULL,
+     ROLE TEXT,
+     MAN_DAYS NUMERIC,
+     HOURLY_RATE NUMERIC
+);
 
 CREATE TABLE ALLOCATIONS (
     ID UUID PRIMARY KEY DEFAULT UUID_GENERATE_V4(),
@@ -76,15 +46,6 @@ CREATE TABLE ALLOCATIONS (
     ROLE TEXT NOT NULL
 );
 
-INSERT INTO allocations (project_id, user_id, start_date, end_date, percentage, role) VALUES
-    ('PRJ-001', '30280c7b-afc3-41bf-b7d2-1fc8016f4bf2', '2024-01-01', '2024-06-30', 1, 'Frontend Developer'),
-    ('PRJ-001', '8c8a4c01-b262-4dae-a6e9-d06c48f48c6d', '2024-02-01', '2024-06-30', 0.5, 'UX Designer'),
-    ('PRJ-002', '671fb99c-efe2-456d-92ec-70229d5c5cbd', '2024-02-15', '2024-08-01', 1, 'Mobile Developer'),
-    ('PRJ-002', '7851514c-661d-4190-9ee1-7e3c63b28e38', '2024-03-01', '2024-07-15', 0.75, 'QA Engineer'),
-    ('PRJ-003', '7ec46305-ace1-4730-be14-58983d077e85', '2023-09-01', '2024-01-15', 1, 'Cloud Engineer'),
-    ('PRJ-003', '79abeeb2-c440-460b-a8a8-76c96c4f017b', '2023-10-01', '2024-01-31', 0.6, 'DevOps Specialist');
-
-
 CREATE TABLE TIME_TRACKING (
     ID UUID PRIMARY KEY DEFAULT UUID_GENERATE_V4(),
     PROJECT_ID TEXT NOT NULL REFERENCES PROJECTS(ID) ON DELETE SET NULL,
@@ -92,7 +53,7 @@ CREATE TABLE TIME_TRACKING (
     DATE DATE NOT NULL,
     HOURS NUMERIC NOT NULL,
     DESCRIPTION TEXT NOT NULL,
-    STATUS TEXT NOT NULL CHECK (STATUS IN ('DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED')),
+    STATUS TEXT NOT NULL CHECK (STATUS IN ('Draft', 'Submitted', 'Approved', 'Rejected')),
     TAGS TEXT[],
     BILLABLE BOOLEAN
 );
