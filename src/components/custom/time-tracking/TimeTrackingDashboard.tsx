@@ -57,7 +57,7 @@ export default function TimeTrackingDashboard({session}:
     const [selectedUser, setSelectedUser] = useState<string>("")
     const [selectedProject, setSelectedProject] = useState<string>("")
     const [currentDate, setCurrentDate] = useState<Date>(new Date())
-    const [viewMode, setViewMode] = useState<"day" | "week" | "month">("week")
+    const [viewMode, setViewMode] = useState<"day" | "week" | "month">("month")
     const [isEntryDialogOpen, setIsEntryDialogOpen] = useState(false)
     const [selectedEntry, setSelectedEntry] = useState<TimeTrackingSchema | null>(null)
     const [loading, setLoading] = useState(false)
@@ -403,7 +403,7 @@ export default function TimeTrackingDashboard({session}:
         try {
             setLoading(true)
             const entriesToSubmit = getEntriesForCurrentView().filter(
-                (entry) => entry.status === "Draft" && entry.user_id === currentUser.id,
+                (entry) => entry.status === "Draft" && entry.user_id === selectedUser,
             )
 
             if (entriesToSubmit.length === 0) {
@@ -516,6 +516,28 @@ export default function TimeTrackingDashboard({session}:
 
             return days.some((day) => isWithinInterval(day, { start: startDate, end: endDate }))
         })
+    }
+
+    const getTimeOffDaysForCurrentView = () => {
+        const daysInView = getDaysForCurrentView()
+        const daySet = new Set<number>()
+
+        getTimeOffsForCurrentView().forEach((timeOff) => {
+            const start = startOfDay(new Date(timeOff.start_date))
+            const end = endOfDay(new Date(timeOff.end_date))
+            const range = eachDayOfInterval({ start, end })
+
+            range.forEach((day) => {
+                const match = daysInView.find((d) => isSameDay(d, day))
+                const isWeekendDay = isWeekend(day)
+
+                if (match && !isWeekendDay) {
+                    daySet.add(day.getTime())
+                }
+            })
+        })
+
+        return daySet.size
     }
 
     const isTimeOffDay = (date: Date, userEmail?: string) => {
@@ -724,6 +746,69 @@ export default function TimeTrackingDashboard({session}:
         )
     }
 
+    const handleFillMonth = async () => {
+        if (!selectedProject || selectedProject === "all") {
+            alert("Please select a project before filling the month.")
+            return
+        }
+
+        const userId = isAdmin ? selectedUser : currentUser?.id
+        if (!userId) return
+
+        const start = startOfMonth(currentDate)
+        const end = endOfMonth(currentDate)
+        const daysInMonth = eachDayOfInterval({ start, end })
+
+        const newEntries = daysInMonth
+            .filter((day) => {
+                const isWeekendDay = isWeekend(day)
+
+                const email = isAdmin
+                    ? allUsers.find((u) => u.id === selectedUser)?.email
+                    : currentUser?.email
+
+                const isOff = !!getTimeOffForDay(day, email)
+
+                const hasEntryAlready = timeEntries.some(
+                    (entry) =>
+                        isSameDay(new Date(entry.date), day) &&
+                        entry.user_id === userId &&
+                        entry.project_id === selectedProject
+                )
+                return !isWeekendDay && !isOff && !hasEntryAlready
+            })
+            .map((day) => ({
+                user_id: userId,
+                project_id: selectedProject,
+                date: format(day, "yyyy-MM-dd"),
+                hours: 8,
+                description: "Auto-filled",
+                status: "Draft",
+                tags: [],
+                billable: true,
+            }))
+
+        if (newEntries.length === 0) {
+            alert("No eligible days to fill.")
+            return
+        }
+
+        try {
+            setLoading(true)
+            const { error } = await supabase.from("time_tracking").insert(newEntries)
+
+            if (error) {
+                console.error("Error auto-filling month:", error)
+            } else {
+                fetchTimeEntries()
+            }
+        } catch (err) {
+            console.error("Error in handleFillMonth:", err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const renderDayView = () => {
         const entries = getEntriesForCurrentView()
         const entriesByDate = groupEntriesByDate(entries)
@@ -734,19 +819,25 @@ export default function TimeTrackingDashboard({session}:
         return (
             <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-medium">{format(currentDate, "EEEE, MMMM d, yyyy")}</h3>
-                        {timeOff && renderTimeOffBadge(timeOff)}
+                    <div className="flex justify-between items-center gap-2">
+                        <h3 className="text-lg font-medium">{format(currentDate, "MMMM yyyy")}</h3>
+                        <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={handleFillMonth}>
+                                <FileText className="mr-1 h-4 w-4"/>
+                                Fill Month
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => handleAddEntry(new Date())}>
+                                <Plus className="mr-1 h-4 w-4"/>
+                                Add Time
+                            </Button>
+                        </div>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => handleAddEntry(currentDate)} disabled={!!timeOff}>
-                        <Plus className="mr-1 h-4 w-4" />
-                        Add Time
-                    </Button>
                 </div>
 
                 {timeOff ? (
-                    <div className="flex flex-col items-center justify-center py-8 text-center border rounded-md bg-muted/20">
-                        <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+                    <div
+                        className="flex flex-col items-center justify-center py-8 text-center border rounded-md bg-muted/20">
+                        <Calendar className="h-12 w-12 text-muted-foreground mb-4"/>
                         <h3 className="text-lg font-medium">Time Off Day</h3>
                         <p className="text-muted-foreground max-w-sm mt-2">
                             You are on {timeOff.time_off_type.attributes.name} today. No time entries can be added.
@@ -762,14 +853,15 @@ export default function TimeTrackingDashboard({session}:
                         </div>
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-8 text-center border rounded-md bg-muted/20">
-                        <Clock className="h-12 w-12 text-muted-foreground mb-4" />
+                    <div
+                        className="flex flex-col items-center justify-center py-8 text-center border rounded-md bg-muted/20">
+                        <Clock className="h-12 w-12 text-muted-foreground mb-4"/>
                         <h3 className="text-lg font-medium">No Time Entries</h3>
                         <p className="text-muted-foreground max-w-sm mt-2">
                             No time entries recorded for this day. Click &quot;Add Time&quot; to log your hours.
                         </p>
                         <Button className="mt-4" onClick={() => handleAddEntry(currentDate)}>
-                            <Plus className="mr-1 h-4 w-4" />
+                            <Plus className="mr-1 h-4 w-4"/>
                             Add Time Entry
                         </Button>
                     </div>
@@ -788,14 +880,18 @@ export default function TimeTrackingDashboard({session}:
 
         return (
             <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium">
-                        {format(startDate, "MMM d")} - {format(endDate, "MMM d, yyyy")}
-                    </h3>
-                    <Button variant="outline" size="sm" onClick={() => handleAddEntry(new Date())}>
-                        <Plus className="mr-1 h-4 w-4" />
-                        Add Time
-                    </Button>
+                <div className="flex justify-between items-center gap-2">
+                    <h3 className="text-lg font-medium">{format(currentDate, "MMMM yyyy")}</h3>
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={handleFillMonth}>
+                            <FileText className="mr-1 h-4 w-4"/>
+                            Fill Month
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleAddEntry(new Date())}>
+                            <Plus className="mr-1 h-4 w-4"/>
+                            Add Time
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-7 gap-2">
@@ -821,8 +917,9 @@ export default function TimeTrackingDashboard({session}:
                                         {format(day, "EEE, MMM d")}
                                     </div>
                                     {!isWeekendDay && !timeOff && (
-                                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleAddEntry(day)}>
-                                            <Plus className="h-4 w-4" />
+                                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0"
+                                                onClick={() => handleAddEntry(day)}>
+                                            <Plus className="h-4 w-4"/>
                                             <span className="sr-only">Add</span>
                                         </Button>
                                     )}
@@ -862,13 +959,17 @@ export default function TimeTrackingDashboard({session}:
                                         })}
 
                                         {dayEntries.length > 2 && (
-                                            <div className="text-xs text-center text-muted-foreground">+{dayEntries.length - 2} more</div>
+                                            <div
+                                                className="text-xs text-center text-muted-foreground">+{dayEntries.length - 2} more</div>
                                         )}
 
-                                        <div className="text-xs font-medium text-right pt-1 border-t">Total: {totalHours}h</div>
+                                        <div
+                                            className="text-xs font-medium text-right pt-1 border-t">Total: {totalHours}h
+                                        </div>
                                     </div>
                                 ) : (
-                                    <div className="flex items-center justify-center h-[80px] text-xs text-muted-foreground">
+                                    <div
+                                        className="flex items-center justify-center h-[80px] text-xs text-muted-foreground">
                                         {timeOff ? timeOff.time_off_type.attributes.name : isWeekendDay ? "Weekend" : "No entries"}
                                     </div>
                                 )}
@@ -890,7 +991,7 @@ export default function TimeTrackingDashboard({session}:
         const entriesByDate = groupEntriesByDate(entries)
 
         const firstDayOfMonth = startOfMonth(currentDate)
-        const firstDayOfCalendar = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 })
+        const firstDayOfCalendar = startOfWeek(firstDayOfMonth, {weekStartsOn: 1})
 
         const weeks = []
         let currentWeek = []
@@ -912,12 +1013,18 @@ export default function TimeTrackingDashboard({session}:
 
         return (
             <div className="space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center gap-2">
                     <h3 className="text-lg font-medium">{format(currentDate, "MMMM yyyy")}</h3>
-                    <Button variant="outline" size="sm" onClick={() => handleAddEntry(new Date())}>
-                        <Plus className="mr-1 h-4 w-4" />
-                        Add Time
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={handleFillMonth}>
+                            <FileText className="mr-1 h-4 w-4"/>
+                            Fill Month
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleAddEntry(new Date())}>
+                            <Plus className="mr-1 h-4 w-4"/>
+                            Add Time
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="border rounded-md overflow-hidden">
@@ -956,22 +1063,26 @@ export default function TimeTrackingDashboard({session}:
                                             )}
                                         >
                                             <div className="flex justify-between items-start">
-                                                <span className={cn("text-sm font-medium p-1", isTodayDay && "text-primary")}>
+                                                <span
+                                                    className={cn("text-sm font-medium p-1", isTodayDay && "text-primary")}>
                                                   {format(day, "d")}
                                                 </span>
                                                 {isCurrentMonth && !isWeekend(day) && !timeOff && (
-                                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleAddEntry(day)}>
-                                                        <Plus className="h-3 w-3" />
+                                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0"
+                                                            onClick={() => handleAddEntry(day)}>
+                                                        <Plus className="h-3 w-3"/>
                                                         <span className="sr-only">Add</span>
                                                     </Button>
                                                 )}
                                             </div>
 
-                                            {timeOff && <div className="mb-1">{renderTimeOffBadge(timeOff)}</div>}
+                                            {timeOff && !isWeekend(day) &&
+                                                <div className="mb-1">{renderTimeOffBadge(timeOff)}</div>}
 
                                             {dayEntries.length > 0 && (
                                                 <div className="mt-1">
-                                                    {totalHours > 0 && <div className="text-xs font-medium text-right mb-1">{totalHours}h</div>}
+                                                    {totalHours > 0 && <div
+                                                        className="text-xs font-medium text-right mb-1">{totalHours}h</div>}
 
                                                     {dayEntries.slice(0, 2).map((entry, i) => {
                                                         const project = getProjectById(entry.project_id)
@@ -1020,6 +1131,21 @@ export default function TimeTrackingDashboard({session}:
         )
     }
 
+    const getPlannedDays = (date: Date) => {
+        const start = startOfMonth(date)
+        const end = endOfMonth(date)
+
+        const daysInMonth = eachDayOfInterval({start, end})
+
+        const workingDays = daysInMonth.filter((day) => {
+            const isWeekendDay = isWeekend(day)
+            const isTimeOff = isTimeOffDay(day)
+            return !isWeekendDay && !isTimeOff
+        })
+
+        return (workingDays.length - getTimeOffDaysForCurrentView())
+    }
+
     return (
         <div className={`transition-all duration-300 ${isCollapsed ? "ml-[3rem]" : "ml-[15rem]"} p-6`}>
             <div className="p-6">
@@ -1060,7 +1186,7 @@ export default function TimeTrackingDashboard({session}:
                                     <div className="space-y-2">
                                         <Label htmlFor="user">User</Label>
                                         <Select value={selectedUser} onValueChange={setSelectedUser}>
-                                            <SelectTrigger id="user">
+                                            <SelectTrigger id="user" className={"w-full"}>
                                                 <SelectValue placeholder="Select a user" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -1176,7 +1302,11 @@ export default function TimeTrackingDashboard({session}:
                                         </div>
                                         <div className="flex justify-between text-sm">
                                             <span>Time Offs:</span>
-                                            <span className="font-bold">{getTimeOffsForCurrentView().length}</span>
+                                            <span className="font-bold">{getTimeOffDaysForCurrentView()} days</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span>Planned:</span>
+                                            <span className="font-bold">{getPlannedDays(currentDate)} days</span>
                                         </div>
                                     </div>
                                 </div>
