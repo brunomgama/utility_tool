@@ -3,8 +3,7 @@
 import * as React from "react"
 import { useState, useEffect, useMemo } from "react"
 import { format, getMonth, getYear, startOfMonth, endOfMonth, eachMonthOfInterval } from "date-fns"
-import { ChevronLeft, ChevronRight, Download, Filter, TrendingUp, TrendingDown } from "lucide-react"
-import { LineChart, Line, CartesianGrid, XAxis, YAxis, ResponsiveContainer, ReferenceLine } from "recharts"
+import { ChevronLeft, ChevronRight, Download, Filter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,7 +15,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { supabase } from "@/lib/supabase"
 import { formatCurrency } from "@/lib/currency_formater"
 import { useSidebar } from "@/context/sidebar-context"
-import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
 // Type definitions
 type UserSchema = {
@@ -72,12 +70,6 @@ type TimeTrackingSchema = {
     status: string
     tags?: string[]
     billable: boolean
-}
-
-type MonthData = {
-    month: Date
-    daysInMonth: number
-    workingDays: number
 }
 
 type ProjectRoleAllocationData = {
@@ -364,52 +356,52 @@ export default function TimeSheetAnalysis() {
         return Array.from(new Set(users.map((user) => user.department)))
     }, [users])
 
-    const chartData = useMemo(() => {
-        if (Object.keys(monthlyTotals).length === 0) return []
+    // const chartData = useMemo(() => {
+    //     if (Object.keys(monthlyTotals).length === 0) return []
+    //
+    //     return Object.keys(monthlyTotals)
+    //         .sort()
+    //         .map((monthKey) => {
+    //             const [year, monthNum] = monthKey.split("-")
+    //             const date = new Date(Number.parseInt(year), Number.parseInt(monthNum) - 1, 1)
+    //             const monthName = format(date, "MMM")
+    //
+    //             const { calculatedDays, actualHours } = monthlyTotals[monthKey]
+    //             const actualDays = actualHours / 8
+    //
+    //             return {
+    //                 month: monthName,
+    //                 calculated: calculatedDays,
+    //                 actual: actualDays,
+    //             }
+    //         })
+    //         .filter((d) => d.calculated > 0 || d.actual > 0) // <--- filter months with no data
+    // }, [monthlyTotals])
 
-        return Object.keys(monthlyTotals)
-            .sort()
-            .map((monthKey) => {
-                const [year, monthNum] = monthKey.split("-")
-                const date = new Date(Number.parseInt(year), Number.parseInt(monthNum) - 1, 1)
-                const monthName = format(date, "MMM")
+    // const chartConfig = {
+    //     calculated: {
+    //         label: "Calculated (Days)",
+    //         color: "hsl(215, 14%, 34%)",
+    //     },
+    //     actual: {
+    //         label: "Actual (Days)",
+    //         color: "hsl(142, 76%, 36%)",
+    //     },
+    // } satisfies ChartConfig
 
-                const { calculatedDays, actualHours } = monthlyTotals[monthKey]
-                const actualDays = actualHours / 8
-
-                return {
-                    month: monthName,
-                    calculated: calculatedDays,
-                    actual: actualDays,
-                }
-            })
-            .filter((d) => d.calculated > 0 || d.actual > 0) // <--- filter months with no data
-    }, [monthlyTotals])
-
-    const chartConfig = {
-        calculated: {
-            label: "Calculated (Days)",
-            color: "hsl(215, 14%, 34%)",
-        },
-        actual: {
-            label: "Actual (Days)",
-            color: "hsl(142, 76%, 36%)",
-        },
-    } satisfies ChartConfig
-
-    const trendPercentage = useMemo(() => {
-        if (chartData.length < 2) return 0
-
-        const lastMonth = chartData[chartData.length - 1]
-        const previousMonth = chartData[chartData.length - 2]
-
-        if (!lastMonth || !previousMonth || previousMonth.actual === 0) return 0
-
-        const actualDiff = lastMonth.actual - previousMonth.actual
-        const percentChange = (actualDiff / previousMonth.actual) * 100
-
-        return percentChange
-    }, [chartData])
+    // const trendPercentage = useMemo(() => {
+    //     if (chartData.length < 2) return 0
+    //
+    //     const lastMonth = chartData[chartData.length - 1]
+    //     const previousMonth = chartData[chartData.length - 2]
+    //
+    //     if (!lastMonth || !previousMonth || previousMonth.actual === 0) return 0
+    //
+    //     const actualDiff = lastMonth.actual - previousMonth.actual
+    //     const percentChange = (actualDiff / previousMonth.actual) * 100
+    //
+    //     return percentChange
+    // }, [chartData])
 
     const previousYear = () => setYear(year - 1)
     const nextYear = () => setYear(year + 1)
@@ -474,12 +466,12 @@ export default function TimeSheetAnalysis() {
         ))
     }
 
-    const values = chartData.map((d) => Math.max(d.calculated, d.actual))
+    // const values = chartData.map((d) => Math.max(d.calculated, d.actual))
 
-    const sorted = [...values].sort((a, b) => a - b)
-    const safeMax = sorted[Math.floor(sorted.length * 0.95)] || 10
+    // const sorted = [...values].sort((a, b) => a - b)
+    // const safeMax = sorted[Math.floor(sorted.length * 0.95)] || 10
 
-    const yAxisMax = safeMax * 1.2
+    // const yAxisMax = safeMax * 1.2
 
     return (
         <div className={`transition-all duration-300 ${isCollapsed ? "ml-[3rem]" : "ml-[15rem]"} p-6`}>

@@ -110,7 +110,6 @@ export default function AddProjectModal({ open, onClose, onProjectCreated }:
                         budget: totalBudget,
                     },
                 ])
-
                 .select()
 
             if (error) {

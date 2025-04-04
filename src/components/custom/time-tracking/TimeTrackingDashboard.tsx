@@ -875,9 +875,6 @@ export default function TimeTrackingDashboard({session}:
         const entries = getEntriesForCurrentView()
         const entriesByDate = groupEntriesByDate(entries)
 
-        const startDate = weekDays[0]
-        const endDate = weekDays[weekDays.length - 1]
-
         return (
             <div className="space-y-4">
                 <div className="flex justify-between items-center gap-2">
