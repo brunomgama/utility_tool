@@ -602,8 +602,8 @@ export default function ProjectDetailDialog({modalOpen, setModalOpen, selectedPr
                                 </div>
 
                                 <div className="flex flex-col h-full space-y-12">
-                                    <ChartContainer config={chartConfig} className={"h-[15%] aspect-video"}>
-                                        <LineChart data={chartData}>
+                                    <ChartContainer config={chartConfig} className="h-[15rem]">
+                                    <LineChart data={chartData}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false}/>
                                             <XAxis
                                                 dataKey="month"
@@ -617,8 +617,7 @@ export default function ProjectDetailDialog({modalOpen, setModalOpen, selectedPr
                                                 tickMargin={8}
                                             />
 
-                                            <ReferenceLine y={75} stroke="hsl(0, 84%, 60%)"
-                                                           strokeWidth={2}/>
+                                            <ReferenceLine y={75} stroke="hsl(0, 84%, 60%)" strokeWidth={2}/>
                                             <ChartTooltip content={<ChartTooltipContent/>}/>
                                             <Line
                                                 type="monotone"
