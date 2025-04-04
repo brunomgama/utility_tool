@@ -1,19 +1,6 @@
 "use client"
 
-import {
-    Calendar,
-    ChevronFirst,
-    ChevronLast,
-    ChevronLeft,
-    ChevronRight,
-    Search,
-    User,
-    Users,
-    Plus,
-    Trash2,
-    Edit,
-    FileText, Link2, Clipboard, DollarSign,
-} from "lucide-react"
+import {Calendar, ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Search, User, Users, Plus, Trash2, Edit, FileText, Link2, Clipboard, DollarSign} from "lucide-react"
 import {type ColumnDef,flexRender,getCoreRowModel,getFilteredRowModel,getPaginationRowModel,getSortedRowModel,useReactTable,} from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -855,7 +842,7 @@ export default function ProjectDashboard() {
     const previousYear = () => setYear(year - 1)
     const nextYear = () => setYear(year + 1)
 
-    const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth())
+    const [selectedMonth] = useState<number>(new Date().getMonth())
     const getTimeTrackingStatsForMonth = (projectId: string, month: number, year: number) => {
         const projectEntries = timeEntries.filter(
             (entry) =>
@@ -1161,22 +1148,7 @@ export default function ProjectDashboard() {
                                     </TabsContent>
 
                                     <TabsContent value="details" className="space-y-4">
-
-                                        <div className="mb-4 flex items-center justify-between">
-                                            <Select value={selectedMonth.toString()}
-                                                    onValueChange={(val) => setSelectedMonth(Number(val))}>
-                                                <SelectTrigger id="month-selector" className="w-60 mt-1">
-                                                    <SelectValue placeholder="Select month"/>
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {months.map(({month}, i) => (
-                                                        <SelectItem key={i} value={i.toString()}>
-                                                            {format(month, "MMMM")}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-
+                                        <div className="mb-4 flex items-center justify-end">
                                             <div className="flex items-center gap-2">
                                                 <Button variant="outline" size="sm" onClick={previousYear}
                                                         className="px-3">
@@ -1230,162 +1202,109 @@ export default function ProjectDashboard() {
                                             })()}
                                         </div>
 
-                                        <CardContent className="p-0">
-                                            <div className="flex flex-col">
-                                                {/* Table Section */}
-                                                <div className="w-full overflow-x-auto">
-                                                    <div className="min-w-[1000px]">
-                                                        <Table className="w-full border-collapse">
-                                                            <TableHeader
-                                                                className="sticky top-0 bg-background z-20">
-                                                                <TableRow className="bg-muted/50">
+                                        <div className="flex justify-center">
+                                            <div className="relative overflow-hidden" style={{maxWidth: "100%"}}>
+                                                <div className="overflow-auto max-h-[500px]" style={{maxWidth: "100%"}}>
+                                                    <Table className="border-collapse">
+                                                        <TableHeader className="sticky top-0 bg-background z-20">
+                                                            <TableRow className="bg-muted/50">
+                                                                <TableHead
+                                                                    className="text-left font-medium sticky left-0 bg-muted/100 z-30 whitespace-nowrap">
+                                                                </TableHead>
+                                                                {months.map(({month, workingDays}) => (
                                                                     <TableHead
-                                                                        className="text-left font-medium sticky left-0 bg-muted/100 z-30 whitespace-nowrap">
+                                                                        key={format(month, "yyyy-MM")}
+                                                                        colSpan={5}
+                                                                        className="text-center border-l whitespace-nowrap"
+                                                                        style={{
+                                                                            borderLeft: month.getMonth() > 0 ? "2px solid var(--border)" : "",
+                                                                        }}
+                                                                    >
+                                                                        <div>{format(month, "MMMM yyyy")}</div>
+                                                                        <div
+                                                                            className="text-xs text-muted-foreground">Days: {workingDays}</div>
                                                                     </TableHead>
-                                                                    {(() => {
-                                                                        const {
-                                                                            month,
-                                                                            workingDays
-                                                                        } = months[selectedMonth]
-                                                                        return (
-                                                                            <TableHead
-                                                                                key={format(month, "yyyy-MM")}
-                                                                                colSpan={5}
-                                                                                className="text-center border-l whitespace-nowrap"
-                                                                            >
-                                                                                <div>{format(month, "MMMM yyyy")}</div>
-                                                                                <div
-                                                                                    className="text-xs text-muted-foreground">Days: {workingDays}</div>
-                                                                            </TableHead>
-                                                                        )
-                                                                    })()}
-                                                                </TableRow>
-                                                                <TableRow className="bg-muted/30">
-                                                                    <TableHead
-                                                                        className="sticky left-0 bg-muted/100 z-30 whitespace-nowrap w-[30rem]">
+                                                                ))}
+                                                            </TableRow>
+                                                            <TableRow className="bg-muted/30">
+                                                                <TableHead
+                                                                    className="sticky left-0 bg-muted/100 z-30 whitespace-nowrap w-[30rem]">
+                                                                    <div className="flex w-full">
+                                                                        <div
+                                                                            className="text-left text-xs font-medium w-[12rem]">Project
+                                                                            Role
+                                                                        </div>
+                                                                        <div
+                                                                            className="text-left text-xs font-medium w-[8rem]">Staffing
+                                                                        </div>
+                                                                        <div
+                                                                            className="text-left text-xs font-medium w-[5rem]">Rate
+                                                                            (h)
+                                                                        </div>
+                                                                        <div
+                                                                            className="text-left text-xs font-medium w-[5rem]">Rate
+                                                                            (d)
+                                                                        </div>
+                                                                    </div>
+                                                                </TableHead>
+                                                                {months.map(({month}) => (
+                                                                    <React.Fragment key={format(month, "yyyy-MM")}>
+                                                                        <TableHead
+                                                                            className="text-center border-l text-xs font-medium whitespace-nowrap"
+                                                                            style={{
+                                                                                borderLeft: month.getMonth() > 0 ? "2px solid var(--border)" : "",
+                                                                            }}
+                                                                        >
+                                                                            Calculation (Days)
+                                                                        </TableHead>
+                                                                        <TableHead
+                                                                            className="text-center text-xs font-medium whitespace-nowrap">
+                                                                            Calculation (Revenue)
+                                                                        </TableHead>
+                                                                        <TableHead
+                                                                            className="text-center text-xs font-medium whitespace-nowrap">
+                                                                            Actual
+                                                                        </TableHead>
+                                                                        <TableHead
+                                                                            className="text-center text-xs font-medium whitespace-nowrap">
+                                                                            Allocated
+                                                                        </TableHead>
+                                                                        <TableHead
+                                                                            className="text-center text-xs font-medium whitespace-nowrap">
+                                                                            Revenue
+                                                                        </TableHead>
+                                                                    </React.Fragment>
+                                                                ))}
+                                                            </TableRow>
+                                                        </TableHeader>
+                                                        <TableBody>
+                                                            {projectRoleAllocations.map((allocation, index) => (
+                                                                <TableRow
+                                                                    key={`${allocation.projectId}-${allocation.projectRole}-${allocation.staffing}-${index}`}
+                                                                    className="hover:bg-muted/20"
+                                                                >
+                                                                    <TableCell
+                                                                        className="sticky left-0 bg-background z-10 p-2 whitespace-nowrap w-[30rem]">
                                                                         <div className="flex w-full">
                                                                             <div
-                                                                                className="text-left text-xs font-medium w-[12rem]">Project
-                                                                                Role
-                                                                            </div>
+                                                                                className="text-sm truncate w-[12rem]">{allocation.projectRole}</div>
                                                                             <div
-                                                                                className="text-left text-xs font-medium w-[8rem]">Staffing
-                                                                            </div>
+                                                                                className="text-sm truncate w-[8rem]">{allocation.staffing}</div>
                                                                             <div
-                                                                                className="text-left text-xs font-medium w-[5rem]">Rate
-                                                                                (h)
-                                                                            </div>
+                                                                                className="text-sm truncate w-[5rem]">{formatCurrency(allocation.rateHourly)}</div>
                                                                             <div
-                                                                                className="text-left text-xs font-medium w-[5rem]">Rate
-                                                                                (d)
-                                                                            </div>
+                                                                                className="text-sm truncate w-[5rem]">{formatCurrency(allocation.rateDaily)}</div>
                                                                         </div>
-                                                                    </TableHead>
-                                                                    {(() => {
-                                                                        const {
-                                                                            month,
-                                                                        } = months[selectedMonth]
-                                                                        return (
-                                                                            <React.Fragment
-                                                                                key={format(month, "yyyy-MM")}>
-                                                                                <TableHead
-                                                                                    className="text-center border-l text-xs font-medium whitespace-nowrap"
-                                                                                    style={{
-                                                                                        borderLeft: month.getMonth() > 0 ? "2px solid var(--border)" : "",
-                                                                                    }}
-                                                                                >
-                                                                                    Calculation (Days)
-                                                                                </TableHead>
-                                                                                <TableHead
-                                                                                    className="text-center text-xs font-medium whitespace-nowrap">
-                                                                                    Calculation (Revenue)
-                                                                                </TableHead>
-                                                                                <TableHead
-                                                                                    className="text-center text-xs font-medium whitespace-nowrap">
-                                                                                    Actual
-                                                                                </TableHead>
-                                                                                <TableHead
-                                                                                    className="text-center text-xs font-medium whitespace-nowrap">
-                                                                                    Allocated
-                                                                                </TableHead>
-                                                                                <TableHead
-                                                                                    className="text-center text-xs font-medium whitespace-nowrap">
-                                                                                    Revenue
-                                                                                </TableHead>
-                                                                            </React.Fragment>
-                                                                        )
-                                                                    })()}
-                                                                </TableRow>
-                                                            </TableHeader>
-                                                            <TableBody>
-                                                                {projectRoleAllocations.map((allocation, index) => (
-                                                                    <TableRow
-                                                                        key={`${allocation.projectId}-${allocation.projectRole}-${allocation.staffing}-${index}`}
-                                                                        className="hover:bg-muted/20"
-                                                                    >
-                                                                        <TableCell
-                                                                            className="sticky left-0 bg-background z-10 p-2 whitespace-nowrap w-[30rem]">
-                                                                            <div className="flex w-full">
-                                                                                <div
-                                                                                    className="text-sm truncate w-[12rem]">{allocation.projectRole}</div>
-                                                                                <div
-                                                                                    className="text-sm truncate w-[8rem]">{allocation.staffing}</div>
-                                                                                <div
-                                                                                    className="text-sm truncate w-[5rem]">{formatCurrency(allocation.rateHourly)}</div>
-                                                                                <div
-                                                                                    className="text-sm truncate w-[5rem]">{formatCurrency(allocation.rateDaily)}</div>
-                                                                            </div>
-                                                                        </TableCell>
-                                                                        {(() => {
-                                                                            const {month} = months[selectedMonth]
-                                                                            const monthKey = format(month, "yyyy-MM")
-
-                                                                            return (
-                                                                                <>
-                                                                                    <TableCell
-                                                                                        className="text-center p-2 whitespace-nowrap">
-                                                                                        {allocation.monthlyData[monthKey]?.calculatedDays?.toFixed(1) ?? "0.0"}
-                                                                                    </TableCell>
-                                                                                    <TableCell
-                                                                                        className="text-center p-2 whitespace-nowrap">
-                                                                                        {formatCurrency(allocation.monthlyData[monthKey]?.calculatedRevenue ?? 0)}
-                                                                                    </TableCell>
-                                                                                    <TableCell
-                                                                                        className="text-center p-2 whitespace-nowrap">
-                                                                                        {allocation.monthlyData[monthKey]?.actualHours
-                                                                                            ? `${allocation.monthlyData[monthKey].actualHours.toFixed(1)}h`
-                                                                                            : "0.0h"}
-                                                                                    </TableCell>
-                                                                                    <TableCell
-                                                                                        className="text-center p-2 whitespace-nowrap">
-                                                                                        {allocation.monthlyData[monthKey]?.allocatedPercentage
-                                                                                            ? `${allocation.monthlyData[monthKey].allocatedPercentage}%`
-                                                                                            : "0%"}
-                                                                                    </TableCell>
-                                                                                    <TableCell
-                                                                                        className="text-center p-2 whitespace-nowrap">
-                                                                                        {formatCurrency(allocation.monthlyData[monthKey]?.actualRevenue ?? 0)}
-                                                                                    </TableCell>
-                                                                                </>
-                                                                            )
-                                                                        })()}
-
-                                                                    </TableRow>
-                                                                ))}
-
-                                                                {/* Totals row - always at the bottom */}
-                                                                <TableRow
-                                                                    className="bg-muted/100 font-medium sticky bottom-0 z-20">
-                                                                    <TableCell
-                                                                        className="sticky left-0 bg-muted/100 z-30 p-2 whitespace-nowrap">
-                                                                        TOTAL
                                                                     </TableCell>
-                                                                    {(() => {
-                                                                        const {month} = months[selectedMonth]
+                                                                    {months.map(({month}) => {
                                                                         const monthKey = format(month, "yyyy-MM")
-                                                                        const totals = monthlyTotals[monthKey]
-
-                                                                        if (!totals) return null
+                                                                        const monthData = allocation.monthlyData[monthKey] || {
+                                                                            calculatedDays: 0,
+                                                                            calculatedRevenue: 0,
+                                                                            actualHours: 0,
+                                                                            allocatedPercentage: 0,
+                                                                            actualRevenue: 0,
+                                                                        }
 
                                                                         return (
                                                                             <React.Fragment key={monthKey}>
@@ -1395,32 +1314,74 @@ export default function ProjectDashboard() {
                                                                                         borderLeft: month.getMonth() > 0 ? "2px solid var(--border)" : "",
                                                                                     }}
                                                                                 >
-                                                                                    {totals.calculatedDays.toFixed(1)}
+                                                                                    {monthData.calculatedDays.toFixed(1)}
                                                                                 </TableCell>
                                                                                 <TableCell
                                                                                     className="text-center p-2 whitespace-nowrap">
-                                                                                    {formatCurrency(totals.calculatedRevenue)}
+                                                                                    {formatCurrency(monthData.calculatedRevenue)}
                                                                                 </TableCell>
                                                                                 <TableCell
                                                                                     className="text-center p-2 whitespace-nowrap">
-                                                                                    {totals.actualHours > 0 ? `${totals.actualHours.toFixed(1)}h` : "0.0h"}
+                                                                                    {monthData.actualHours > 0 ? `${monthData.actualHours.toFixed(1)}h` : "0.0h"}
                                                                                 </TableCell>
                                                                                 <TableCell
-                                                                                    className="text-center p-2 whitespace-nowrap">-</TableCell>
+                                                                                    className="text-center p-2 whitespace-nowrap">
+                                                                                    {monthData.allocatedPercentage > 0 ? `${monthData.allocatedPercentage}%` : "0%"}
+                                                                                </TableCell>
                                                                                 <TableCell
                                                                                     className="text-center p-2 whitespace-nowrap">
-                                                                                    {formatCurrency(totals.actualRevenue)}
+                                                                                    {formatCurrency(monthData.actualRevenue)}
                                                                                 </TableCell>
                                                                             </React.Fragment>
                                                                         )
-                                                                    })()}
+                                                                    })}
                                                                 </TableRow>
-                                                            </TableBody>
-                                                        </Table>
-                                                    </div>
+                                                            ))}
+
+                                                            {/* Totals row - always at the bottom */}
+                                                            <TableRow
+                                                                className="bg-muted/100 font-medium sticky bottom-0 z-20">
+                                                                <TableCell
+                                                                    className="sticky left-0 bg-muted/100 z-30 p-2 whitespace-nowrap">
+                                                                    TOTAL
+                                                                </TableCell>
+                                                                {months.map(({month}) => {
+                                                                    const monthKey = format(month, "yyyy-MM")
+                                                                    const totals = monthlyTotals[monthKey]
+
+                                                                    return (
+                                                                        <React.Fragment key={monthKey}>
+                                                                            <TableCell
+                                                                                className="text-center p-2 whitespace-nowrap"
+                                                                                style={{
+                                                                                    borderLeft: month.getMonth() > 0 ? "2px solid var(--border)" : "",
+                                                                                }}
+                                                                            >
+                                                                                {totals.calculatedDays.toFixed(1)}
+                                                                            </TableCell>
+                                                                            <TableCell
+                                                                                className="text-center p-2 whitespace-nowrap">
+                                                                                {formatCurrency(totals.calculatedRevenue)}
+                                                                            </TableCell>
+                                                                            <TableCell
+                                                                                className="text-center p-2 whitespace-nowrap">
+                                                                                {totals.actualHours > 0 ? `${totals.actualHours.toFixed(1)}h` : "0.0h"}
+                                                                            </TableCell>
+                                                                            <TableCell
+                                                                                className="text-center p-2 whitespace-nowrap">-</TableCell>
+                                                                            <TableCell
+                                                                                className="text-center p-2 whitespace-nowrap">
+                                                                                {formatCurrency(totals.actualRevenue)}
+                                                                            </TableCell>
+                                                                        </React.Fragment>
+                                                                    )
+                                                                })}
+                                                            </TableRow>
+                                                        </TableBody>
+                                                    </Table>
                                                 </div>
                                             </div>
-                                        </CardContent>
+                                        </div>
                                     </TabsContent>
                                 </Tabs>
                             </>
@@ -1469,7 +1430,7 @@ export default function ProjectDashboard() {
                                     }}
                                 >
                                     <SelectTrigger id="role" className="w-full">
-                                    <SelectValue placeholder="Select a role"/>
+                                        <SelectValue placeholder="Select a role"/>
                                     </SelectTrigger>
                                     <SelectContent>
                                         {availableUnassignedRoles.map((role) => (
