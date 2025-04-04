@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { supabase } from "@/lib/supabase"
 import { formatCurrency } from "@/lib/currency_formater"
 import { useSidebar } from "@/context/sidebar-context"
+import {CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, XAxis, YAxis} from "recharts";
+import {ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent} from "@/components/ui/chart"
 
 // Type definitions
 type UserSchema = {
@@ -356,52 +358,52 @@ export default function TimeSheetAnalysis() {
         return Array.from(new Set(users.map((user) => user.department)))
     }, [users])
 
-    // const chartData = useMemo(() => {
-    //     if (Object.keys(monthlyTotals).length === 0) return []
-    //
-    //     return Object.keys(monthlyTotals)
-    //         .sort()
-    //         .map((monthKey) => {
-    //             const [year, monthNum] = monthKey.split("-")
-    //             const date = new Date(Number.parseInt(year), Number.parseInt(monthNum) - 1, 1)
-    //             const monthName = format(date, "MMM")
-    //
-    //             const { calculatedDays, actualHours } = monthlyTotals[monthKey]
-    //             const actualDays = actualHours / 8
-    //
-    //             return {
-    //                 month: monthName,
-    //                 calculated: calculatedDays,
-    //                 actual: actualDays,
-    //             }
-    //         })
-    //         .filter((d) => d.calculated > 0 || d.actual > 0) // <--- filter months with no data
-    // }, [monthlyTotals])
+    const chartData = useMemo(() => {
+        if (Object.keys(monthlyTotals).length === 0) return []
 
-    // const chartConfig = {
-    //     calculated: {
-    //         label: "Calculated (Days)",
-    //         color: "hsl(215, 14%, 34%)",
-    //     },
-    //     actual: {
-    //         label: "Actual (Days)",
-    //         color: "hsl(142, 76%, 36%)",
-    //     },
-    // } satisfies ChartConfig
+        return Object.keys(monthlyTotals)
+            .sort()
+            .map((monthKey) => {
+                const [year, monthNum] = monthKey.split("-")
+                const date = new Date(Number.parseInt(year), Number.parseInt(monthNum) - 1, 1)
+                const monthName = format(date, "MMM")
 
-    // const trendPercentage = useMemo(() => {
-    //     if (chartData.length < 2) return 0
-    //
-    //     const lastMonth = chartData[chartData.length - 1]
-    //     const previousMonth = chartData[chartData.length - 2]
-    //
-    //     if (!lastMonth || !previousMonth || previousMonth.actual === 0) return 0
-    //
-    //     const actualDiff = lastMonth.actual - previousMonth.actual
-    //     const percentChange = (actualDiff / previousMonth.actual) * 100
-    //
-    //     return percentChange
-    // }, [chartData])
+                const { calculatedDays, actualHours } = monthlyTotals[monthKey]
+                const actualDays = actualHours / 8
+
+                return {
+                    month: monthName,
+                    calculated: calculatedDays,
+                    actual: actualDays,
+                }
+            })
+            .filter((d) => d.calculated > 0 || d.actual > 0) // <--- filter months with no data
+    }, [monthlyTotals])
+
+    const chartConfig = {
+        calculated: {
+            label: "Calculated (Days)",
+            color: "hsl(215, 14%, 34%)",
+        },
+        actual: {
+            label: "Actual (Days)",
+            color: "hsl(142, 76%, 36%)",
+        },
+    } satisfies ChartConfig
+
+    const trendPercentage = useMemo(() => {
+        if (chartData.length < 2) return 0
+
+        const lastMonth = chartData[chartData.length - 1]
+        const previousMonth = chartData[chartData.length - 2]
+
+        if (!lastMonth || !previousMonth || previousMonth.actual === 0) return 0
+
+        const actualDiff = lastMonth.actual - previousMonth.actual
+        const percentChange = (actualDiff / previousMonth.actual) * 100
+
+        return percentChange
+    }, [chartData])
 
     const previousYear = () => setYear(year - 1)
     const nextYear = () => setYear(year + 1)
@@ -466,12 +468,12 @@ export default function TimeSheetAnalysis() {
         ))
     }
 
-    // const values = chartData.map((d) => Math.max(d.calculated, d.actual))
+    const values = chartData.map((d) => Math.max(d.calculated, d.actual))
 
-    // const sorted = [...values].sort((a, b) => a - b)
-    // const safeMax = sorted[Math.floor(sorted.length * 0.95)] || 10
+    const sorted = [...values].sort((a, b) => a - b)
+    const safeMax = sorted[Math.floor(sorted.length * 0.95)] || 10
 
-    // const yAxisMax = safeMax * 1.2
+    const yAxisMax = safeMax * 1.2
 
     return (
         <div className={`transition-all duration-300 ${isCollapsed ? "ml-[3rem]" : "ml-[15rem]"} p-6`}>
@@ -496,127 +498,14 @@ export default function TimeSheetAnalysis() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="md:col-span-1">
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label className="text-sm font-medium">Time Period</Label>
-                            <div className="text-sm font-bold">{year}</div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <Label className="text-sm font-medium">Projects</Label>
-                                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setSelectedProjects([])}>
-                                    Clear
-                                </Button>
-                            </div>
-                            <ScrollArea className="h-40 border rounded-md p-2">
-                                <div className="space-y-2">
-                                    {projects.map((project) => (
-                                        <div key={project.id} className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id={`project-${project.id}`}
-                                                checked={selectedProjects.includes(project.id)}
-                                                onCheckedChange={() => toggleProjectSelection(project.id)}
-                                            />
-                                            <Label htmlFor={`project-${project.id}`} className="text-sm cursor-pointer flex-1 truncate">
-                                                {project.project_name}
-                                            </Label>
-                                            <Badge
-                                                variant="outline"
-                                                className={
-                                                    project.status === "Active"
-                                                        ? "bg-green-100 text-green-800 hover:bg-green-100"
-                                                        : "bg-gray-100 text-gray-800 hover:bg-gray-100"
-                                                }
-                                            >
-                                                {project.status}
-                                            </Badge>
-                                        </div>
-                                    ))}
-                                </div>
-                            </ScrollArea>
-                        </div>
 
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <Label className="text-sm font-medium">Departments</Label>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 px-2 text-xs"
-                                    onClick={() => setSelectedDepartments([])}
-                                >
-                                    Clear
-                                </Button>
-                            </div>
-                            <ScrollArea className="h-32 border rounded-md p-2">
-                                <div className="space-y-2">
-                                    {departments.map((department) => (
-                                        <div key={department} className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id={`department-${department}`}
-                                                checked={selectedDepartments.includes(department)}
-                                                onCheckedChange={() => toggleDepartmentSelection(department)}
-                                            />
-                                            <Label htmlFor={`department-${department}`} className="text-sm cursor-pointer">
-                                                {department}
-                                            </Label>
-                                        </div>
-                                    ))}
-                                </div>
-                            </ScrollArea>
-                        </div>
-
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <Label className="text-sm font-medium">Team Members</Label>
-                                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setSelectedUsers([])}>
-                                    Clear
-                                </Button>
-                            </div>
-                            <ScrollArea className="h-40 border rounded-md p-2">
-                                <div className="space-y-2">
-                                    {users.map((user) => (
-                                        <div key={user.id} className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id={`user-${user.id}`}
-                                                checked={selectedUsers.includes(user.id)}
-                                                onCheckedChange={() => toggleUserSelection(user.id)}
-                                            />
-                                            <Label htmlFor={`user-${user.id}`} className="text-sm cursor-pointer">
-                                                {user.name}
-                                            </Label>
-                                        </div>
-                                    ))}
-                                </div>
-                            </ScrollArea>
-                        </div>
-
-                        <div className="flex items-center space-x-2 pt-2">
-                            <Checkbox
-                                id="active-only"
-                                checked={showOnlyActive}
-                                onCheckedChange={(checked) => setShowOnlyActive(!!checked)}
-                            />
-                            <Label htmlFor="active-only">Show only active projects</Label>
-                        </div>
-
-                        <div className="pt-4 border-t">
-                            <Button variant="outline" className="w-full" onClick={resetFilters}>
-                                <Filter className="h-4 w-4 mr-2" />
-                                Reset Filters
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="md:col-span-3">
+                <Card className="md:col-span-4">
                     <CardHeader>
                         <CardTitle>Time Sheet Analysis</CardTitle>
                         <p className="text-sm text-muted-foreground">Project allocations, rates, and revenue for {year}</p>
                     </CardHeader>
-                    <CardContent className="p-0">
+                    <CardContent className="">
                         {loading ? (
                             <div className="flex justify-center items-center h-64">
                                 <div className="flex flex-col items-center gap-2">
@@ -632,56 +521,48 @@ export default function TimeSheetAnalysis() {
                                 </p>
                             </div>
                         ) : (
-                            <div className="flex flex-col">
+                            <div className="flex flex-col h-full justify-around">
                                 {/* Chart Section */}
-                                {/*<Card className="mb-4 shadow-none border-none">*/}
-                                {/*    <CardContent className="p-0">*/}
-                                {/*        <div className="h-[25vh] w-full">*/}
-                                {/*            <ChartContainer config={chartConfig}>*/}
-                                {/*                <ResponsiveContainer width="100%" height="100%">*/}
-                                {/*                    <LineChart*/}
-                                {/*                        data={chartData}*/}
-                                {/*                        margin={{top: 20, right: 30, left: 20, bottom: 10}}*/}
-                                {/*                    >*/}
-                                {/*                        <CartesianGrid strokeDasharray="3 3" vertical={false}/>*/}
-                                {/*                        <XAxis*/}
-                                {/*                            dataKey="month"*/}
-                                {/*                            tick={{fontSize: 10}}*/}
-                                {/*                            tickMargin={4}*/}
-                                {/*                        />*/}
-                                {/*                        <YAxis*/}
-                                {/*                            domain={[0, yAxisMax]}*/}
-                                {/*                            tick={{fontSize: 10}}*/}
-                                {/*                            tickFormatter={(value) => `${value}MD`}*/}
-                                {/*                            tickMargin={4}*/}
-                                {/*                        />*/}
-                                {/*                        <ReferenceLine y={75} stroke="hsl(0, 84%, 60%)"*/}
-                                {/*                                       strokeWidth={2}/>*/}
-                                {/*                        <ChartTooltip content={<ChartTooltipContent/>}/>*/}
-                                {/*                        <Line*/}
-                                {/*                            type="monotone"*/}
-                                {/*                            dataKey="calculated"*/}
-                                {/*                            stroke="var(--color-calculated)"*/}
-                                {/*                            strokeWidth={2}*/}
-                                {/*                            strokeDasharray="5 5"*/}
-                                {/*                            dot={false}*/}
-                                {/*                            activeDot={{r: 6}}*/}
-                                {/*                        />*/}
-                                {/*                        <Line*/}
-                                {/*                            type="natural"*/}
-                                {/*                            dataKey="actual"*/}
-                                {/*                            stroke="var(--color-actual)"*/}
-                                {/*                            strokeWidth={2}*/}
-                                {/*                            dot={false}*/}
-                                {/*                            activeDot={{r: 6}}*/}
-                                {/*                        />*/}
-                                {/*                    </LineChart>*/}
-                                {/*                </ResponsiveContainer>*/}
-                                {/*            </ChartContainer>*/}
-                                {/*        </div>*/}
-                                {/*    </CardContent>*/}
-                                {/*</Card>*/}
+                                <ChartContainer config={chartConfig} className={"h-1/3 aspect-video"}>
+                                        <LineChart
+                                            data={chartData}
 
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                            <XAxis
+                                                dataKey="month"
+                                                tick={{fontSize: 12}} // Slightly larger font
+                                                tickMargin={8}        // Increased tick margin
+                                            />
+                                            <YAxis
+                                                domain={[0, yAxisMax]}
+                                                tick={{fontSize: 12}}  // Slightly larger font
+                                                tickFormatter={(value) => `${value}MD`}
+                                                tickMargin={8}        // Increased tick margin
+                                            />
+
+                                            <ReferenceLine y={75} stroke="hsl(0, 84%, 60%)"
+                                                           strokeWidth={2}/>
+                                            <ChartTooltip content={<ChartTooltipContent/>}/>
+                                            <Line
+                                                type="monotone"
+                                                dataKey="calculated"
+                                                stroke="var(--color-calculated)"
+                                                strokeWidth={2}
+                                                strokeDasharray="5 5"
+                                                dot={false}
+                                                activeDot={{r: 6}}
+                                            />
+                                            <Line
+                                                type="natural"
+                                                dataKey="actual"
+                                                stroke="var(--color-actual)"
+                                                strokeWidth={2}
+                                                dot={false}
+                                                activeDot={{r: 6}}
+                                            />
+                                        </LineChart>
+                                </ChartContainer>
                                 {/* Table Section */}
                                 <div className="flex justify-center">
                                     <div className="relative overflow-hidden" style={{ maxWidth: "100%" }}>
