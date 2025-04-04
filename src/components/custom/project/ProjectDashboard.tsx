@@ -719,7 +719,7 @@ export default function ProjectDashboard() {
         )
     }
 
-    const [year] = useState<number>(2025)
+    const [year, setYear] = useState<number>(2025)
     const months = useMemo(() => {
         const startDate = new Date(year, 0, 1)
         const endDate = new Date(year, 11, 31)
@@ -851,6 +851,9 @@ export default function ProjectDashboard() {
 
         return totals
     }, [projectRoleAllocations, months])
+
+    const previousYear = () => setYear(year - 1)
+    const nextYear = () => setYear(year + 1)
 
     const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth())
     const getTimeTrackingStatsForMonth = (projectId: string, month: number, year: number) => {
@@ -1159,7 +1162,7 @@ export default function ProjectDashboard() {
 
                                     <TabsContent value="details" className="space-y-4">
 
-                                        <div className="mb-4">
+                                        <div className="mb-4 flex items-center justify-between">
                                             <Select value={selectedMonth.toString()}
                                                     onValueChange={(val) => setSelectedMonth(Number(val))}>
                                                 <SelectTrigger id="month-selector" className="w-60 mt-1">
@@ -1173,6 +1176,19 @@ export default function ProjectDashboard() {
                                                     ))}
                                                 </SelectContent>
                                             </Select>
+
+                                            <div className="flex items-center gap-2">
+                                                <Button variant="outline" size="sm" onClick={previousYear}
+                                                        className="px-3">
+                                                    <ChevronLeft className="h-4 w-4 mr-1"/>
+                                                </Button>
+                                                <Button variant="outline" size="sm" className="px-3 bg-muted">
+                                                    {year}
+                                                </Button>
+                                                <Button variant="outline" size="sm" onClick={nextYear} className="px-3">
+                                                    <ChevronRight className="h-4 w-4 ml-1"/>
+                                                </Button>
+                                            </div>
                                         </div>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
