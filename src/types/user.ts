@@ -23,3 +23,12 @@ export type UserAllocation = {
         status: string
     }
 }
+
+export type UserNewAllocation = {
+    user_id: string,
+    role_id: string,
+    role_name: string,
+    percentage: number,
+    start_date: Date,
+    end_date: Date | null
+}
